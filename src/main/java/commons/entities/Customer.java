@@ -42,8 +42,8 @@ public class Customer {
 	private String email;
 	
 	@NotBlank(message = "Numero de identificacion Obligatorio")
-	@Column(name = "number_id", nullable = false, unique = true, length = 20)
-	private String numberId;
+	@Column(name = "license", nullable = false, unique = true, length = 20)
+	private String license;
 	
 
 	@NotBlank(message = "Numero de Telefono Obligatorio")
