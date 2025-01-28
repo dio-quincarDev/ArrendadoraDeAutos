@@ -11,7 +11,20 @@ spring:
     show-sql: true     # Imprime las consultas SQL en la consola
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect # Dialecto específico para MySQL 8 (o superior)
-    defer-datasource-initialization: true # Importante para evitar problemas de concurrencia
+        dialect: org.hibernate.dialect.MySQLDialect # Dialecto específico para MySQL
+    defer-datasource-initialization: true # Evita problemas de inicialización
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    enabled: true
+    cache: false
+
 server:
   port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
