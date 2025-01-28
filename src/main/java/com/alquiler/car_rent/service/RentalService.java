@@ -11,6 +11,7 @@ public interface RentalService {
 	Optional<Rental>findRentalById(Long id);
 	Rental createRental (Rental rental);
 	Rental updateRental(Long id, Rental rental);
+    Rental cancelRental(Long id);
 	void deleteRental(Long id);
 
 }

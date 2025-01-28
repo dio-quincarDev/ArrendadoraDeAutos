@@ -67,6 +67,16 @@ public class RentalServiceImpl implements RentalService{
                 })
                 .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
+	
+	public Rental cancelRental(Long id) {
+	    return rentalRepository.findById(id)
+	            .map(rental -> {
+	                rental.setRentalStatus(RentalStatus.CANCELLED);
+	                return rentalRepository.save(rental);
+	            })
+	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+	}
+
 
 	@Override
 	public void deleteRental(Long id) {

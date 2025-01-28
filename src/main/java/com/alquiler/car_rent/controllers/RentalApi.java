@@ -27,6 +27,9 @@ public interface RentalApi {
 	
     @PutMapping("/{id}")
 	ResponseEntity<Rental> updateRental(@PathVariable Long id, @RequestBody Rental rental);
+    
+    @PutMapping("/{id}/cancel")
+    ResponseEntity<Rental> cancelRental(@PathVariable Long id);
 
     @DeleteMapping("/{id}")
     ResponseEntity<Void> deleteRental(@PathVariable Long id);

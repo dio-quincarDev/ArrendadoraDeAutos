@@ -3,6 +3,8 @@ package com.alquiler.car_rent.controllers.impl;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alquiler.car_rent.commons.entities.Rental;
@@ -42,6 +44,12 @@ public class RentalController implements RentalApi {
 		Rental updatedRental = rentalService.updateRental(id, rental);
 		return ResponseEntity.ok(updatedRental);
 	}
+	
+	@Override
+	 public ResponseEntity<Rental> cancelRental(Long id) {
+	    Rental cancelledRental = rentalService.cancelRental(id);
+	    return ResponseEntity.ok(cancelledRental);
+    }
 
 	@Override
 	public ResponseEntity<Void> deleteRental(Long id) {
