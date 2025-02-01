@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.alquiler.car_rent.commons.dtos.CustomerDto;
 import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.service.CustomerService;
@@ -19,15 +20,18 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public List<Customer> findAllCustomers() {
+	public List<CustomerDto> findAllCustomers() {
 		
-		return customerRepository.findAll();
+		return customerRepository.findAll()
+				.stream()
+				.map(CustomerDto::fromEntity)
+				.toList();
 	}
 
 	@Override
-	public Optional<Customer> findCustomerById(Long id) {
+	public Optional<CustomerDto> findCustomerById(Long id) {
 	
-		return customerRepository.findById(id);
+		return customerRepository.findById(id).map(CustomerDto::fromEntity);
 	}
 
 	

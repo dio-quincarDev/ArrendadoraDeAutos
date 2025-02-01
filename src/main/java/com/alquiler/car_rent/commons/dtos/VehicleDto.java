@@ -1,15 +1,29 @@
 package com.alquiler.car_rent.commons.dtos;
 
-import lombok.Data;
+import java.time.LocalDateTime;
 
-@Data
-public class VehicleDto {
-private Long id;
-private String brand;
-private String model;
-private int year;
-private String plate;
-private String status;
-private String createdAt;
+import com.alquiler.car_rent.commons.entities.Vehicle;
+
+public record VehicleDto(
+		Long id,
+		String brand,
+		String model,
+		int year,
+		String plate,
+		String status,
+		LocalDateTime createdAt) {
+	public static VehicleDto fromEntity (Vehicle vehicle){
+		return new VehicleDto(
+				vehicle.getId(),
+				vehicle.getBrand(),
+				vehicle.getModel(),
+				vehicle.getYear(),
+				vehicle.getPlate(),
+				vehicle.getStatus().toString(),
+				vehicle.getCreatedAt()
+				);
+		
+	}
+
 
 }

@@ -1,16 +1,29 @@
 package com.alquiler.car_rent.commons.dtos;
 
-import lombok.Data;
+import java.time.LocalDateTime;
 
-@Data
-public class CustomerDto {
-	private Long id;
-	private String name; 
-	private String email; 
-	private String license;
-	private String phone;
-	private String customerStatus;
-	private String createdAt;
-	private String updatedAt;
+import com.alquiler.car_rent.commons.entities.Customer;
 
+public record CustomerDto(
+        Long id, 
+        String name, 
+        String email, 
+        String license, 
+        String phone,
+        String customerStatus, 
+        LocalDateTime createdAt, 
+        LocalDateTime updatedAt) {
+
+    public static CustomerDto fromEntity(Customer customer) {
+        return new CustomerDto(
+                customer.getId(),
+                customer.getName(),
+                customer.getEmail(),
+                customer.getLicense(),
+                customer.getPhone(),
+                customer.getCustomerStatus().toString(),
+                customer.getCreatedAt(),
+                customer.getUpdatedAt()
+        );
+    }
 }

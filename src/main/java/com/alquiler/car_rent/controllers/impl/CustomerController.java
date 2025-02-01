@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alquiler.car_rent.commons.dtos.CustomerDto;
 import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.controllers.CustomerApi;
 import com.alquiler.car_rent.service.CustomerService;
@@ -26,13 +27,13 @@ public class CustomerController implements CustomerApi{
 	}
 
 	@Override
-	public ResponseEntity<List<Customer>> getAllCustomers() {
-		List<Customer> customers = customerService.findAllCustomers();
+	public ResponseEntity<List<CustomerDto>> getAllCustomers() {
+		List<CustomerDto> customers = customerService.findAllCustomers();
 		return ResponseEntity.ok(customers);
 	}
 
 	@Override
-	public ResponseEntity<Customer> getCustomerById(Long id) {
+	public ResponseEntity<CustomerDto> getCustomerById(Long id) {
 		
 		return customerService.findCustomerById(id)
 				.map(ResponseEntity::ok)
