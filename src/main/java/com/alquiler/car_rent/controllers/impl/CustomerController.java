@@ -4,9 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.alquiler.car_rent.commons.dtos.CustomerDto;
-import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.controllers.CustomerApi;
 import com.alquiler.car_rent.service.CustomerService;
 
@@ -20,8 +18,8 @@ public class CustomerController implements CustomerApi{
 	}
 
 	@Override
-	public ResponseEntity<Customer> createCustomer(Customer customer) {
-		Customer createdCustomer = customerService.createCustomer(customer);
+	public ResponseEntity<CustomerDto> createCustomer(CustomerDto customerDto) {
+		CustomerDto createdCustomer = customerService.createCustomer(customerDto);
 		
 		return ResponseEntity.ok(createdCustomer);
 	}
@@ -34,20 +32,19 @@ public class CustomerController implements CustomerApi{
 
 	@Override
 	public ResponseEntity<CustomerDto> getCustomerById(Long id) {
-		
 		return customerService.findCustomerById(id)
 				.map(ResponseEntity::ok)
 				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@Override
-	public ResponseEntity<Customer> updateCustomer(Long id, Customer customer) {
-		Customer updatedCustomer = customerService.updateCustomer(id, customer);
+	public ResponseEntity<CustomerDto> updateCustomer(Long id, CustomerDto customerDto) {
+		CustomerDto updatedCustomer = customerService.updateCustomer(id, customerDto);
 		return ResponseEntity.ok(updatedCustomer);
 	}
 
 	@Override
-	public ResponseEntity<Customer> deleteCustomer(Long id) {
+	public ResponseEntity<Void> deleteCustomer(Long id) {
 		customerService.deleteCustomer(id);
 		
 		return ResponseEntity.noContent().build();

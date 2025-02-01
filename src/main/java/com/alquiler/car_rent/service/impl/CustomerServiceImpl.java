@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.alquiler.car_rent.commons.dtos.CustomerDto;
 import com.alquiler.car_rent.commons.entities.Customer;
+import com.alquiler.car_rent.commons.mappers.CustomerMapper;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.service.CustomerService;
 
@@ -14,9 +15,11 @@ import com.alquiler.car_rent.service.CustomerService;
 public class CustomerServiceImpl implements CustomerService {
 	
 	private final CustomerRepository customerRepository;
+	private final CustomerMapper customerMapper;
 	
-	public CustomerServiceImpl(CustomerRepository customerRepository) {
+	public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper) {
 		this.customerRepository = customerRepository;
+		this.customerMapper = customerMapper;
 	}
 
 	@Override
@@ -24,35 +27,36 @@ public class CustomerServiceImpl implements CustomerService {
 		
 		return customerRepository.findAll()
 				.stream()
-				.map(CustomerDto::fromEntity)
+				.map(customerMapper::customerToDto)
 				.toList();
 	}
 
 	@Override
 	public Optional<CustomerDto> findCustomerById(Long id) {
-	
-		return customerRepository.findById(id).map(CustomerDto::fromEntity);
+		return customerRepository.findById(id).map(customerMapper::customerToDto);
 	}
 
 	
 
 	@Override
-	public Customer createCustomer(Customer customer) {
-		if (customerRepository.existsByEmail(customer.getEmail())) {
+	public CustomerDto createCustomer(CustomerDto customerDto) {
+		if (customerRepository.existsByEmail(customerDto.email())) {
             throw new IllegalArgumentException("El correo ya está registrado.");
         }
-        return customerRepository.save(customer);
+		Customer customer = customerMapper.dtoToCustomer(customerDto);
+        return customerMapper.customerToDto(customerRepository.save(customer));
 	}
+	
 
 	@Override
-	public Customer updateCustomer(Long id, Customer customer) {
+	public CustomerDto updateCustomer(Long id, CustomerDto customerDto) {
 		  return customerRepository.findById(id)
 	                .map(existingCustomer -> {
-	                    existingCustomer.setName(customer.getName());
-	                    existingCustomer.setEmail(customer.getEmail());
-	                    existingCustomer.setPhone(customer.getPhone());
-	                    existingCustomer.setLicense(customer.getLicense());
-	                    return customerRepository.save(existingCustomer);
+	                    existingCustomer.setName(customerDto.name());
+	                    existingCustomer.setEmail(customerDto.email());
+	                    existingCustomer.setPhone(customerDto.phone());
+	                    existingCustomer.setLicense(customerDto.license());
+	                    return customerMapper.customerToDto(customerRepository.save(existingCustomer));
 	                })
 	                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + id));
 	}

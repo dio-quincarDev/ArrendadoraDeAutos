@@ -3,6 +3,7 @@ package com.alquiler.car_rent.commons.dtos;
 import java.time.LocalDateTime;
 
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.VehicleStatus;
 
 public record VehicleDto(
 		Long id,
@@ -10,20 +11,8 @@ public record VehicleDto(
 		String model,
 		int year,
 		String plate,
-		String status,
+		VehicleStatus status,
 		LocalDateTime createdAt) {
-	public static VehicleDto fromEntity (Vehicle vehicle){
-		return new VehicleDto(
-				vehicle.getId(),
-				vehicle.getBrand(),
-				vehicle.getModel(),
-				vehicle.getYear(),
-				vehicle.getPlate(),
-				vehicle.getStatus().toString(),
-				vehicle.getCreatedAt()
-				);
+	
 		
 	}
-
-
-}

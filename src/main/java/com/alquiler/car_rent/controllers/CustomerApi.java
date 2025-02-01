@@ -13,13 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
 import com.alquiler.car_rent.commons.dtos.CustomerDto;
-import com.alquiler.car_rent.commons.entities.Customer;
 
 @RequestMapping(ApiPathConstants.V1_ROUTE + "/customers")
 public interface CustomerApi {
 	
 	@PostMapping
-	ResponseEntity<Customer>createCustomer(@RequestBody Customer customer);
+	ResponseEntity<CustomerDto>createCustomer(@RequestBody CustomerDto customerDto);
 	
 	@GetMapping
 	ResponseEntity<List<CustomerDto>>getAllCustomers();
@@ -28,10 +27,10 @@ public interface CustomerApi {
 	ResponseEntity<CustomerDto>getCustomerById(@PathVariable Long id);
 	
 	@PutMapping("/{id}")
-	ResponseEntity<Customer>updateCustomer(@PathVariable Long id, @RequestBody Customer customer);
+	ResponseEntity<CustomerDto>updateCustomer(@PathVariable Long id, @RequestBody CustomerDto customerDto);
 	
 	@DeleteMapping("/{id}")
-	ResponseEntity<Customer>deleteCustomer(@PathVariable Long id);
+	ResponseEntity<Void>deleteCustomer(@PathVariable Long id);
 	
 	
 

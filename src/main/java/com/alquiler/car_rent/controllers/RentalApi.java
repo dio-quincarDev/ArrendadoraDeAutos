@@ -12,24 +12,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
-import com.alquiler.car_rent.commons.entities.Rental;
+import com.alquiler.car_rent.commons.dtos.RentalDto;
+
 
 @RequestMapping(ApiPathConstants.V1_ROUTE + "/rentals")
 public interface RentalApi {
 	@PostMapping
-	ResponseEntity<Rental>createRental(@RequestBody Rental rental);
+	ResponseEntity<RentalDto>createRental(@RequestBody RentalDto rentalDto);
 	
 	@GetMapping
-	ResponseEntity<List<Rental>>getAllRentals();
+	ResponseEntity<List<RentalDto>>getAllRentals();
 	
 	@GetMapping("/{id}")
-	ResponseEntity<Rental>getRentalById(@PathVariable Long id, @RequestBody Rental rental);
+	ResponseEntity<RentalDto>getRentalById(@PathVariable Long id, @RequestBody RentalDto rentalDto);
 	
     @PutMapping("/{id}")
-	ResponseEntity<Rental> updateRental(@PathVariable Long id, @RequestBody Rental rental);
+	ResponseEntity<RentalDto> updateRental(@PathVariable Long id, @RequestBody RentalDto rentalDto);
     
     @PutMapping("/{id}/cancel")
-    ResponseEntity<Rental> cancelRental(@PathVariable Long id);
+    ResponseEntity<RentalDto> cancelRental(@PathVariable Long id);
 
     @DeleteMapping("/{id}")
     ResponseEntity<Void> deleteRental(@PathVariable Long id);
