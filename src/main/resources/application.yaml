@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: car_rent
@@ -28,3 +29,11 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+twilio:
+  account:
+    sid: AC27a700d98e81cf2ab213ec3f4a3c14a6
+  auth:
+    token: 317d3dec6ed226d15aacbc62dc97b5e8
+  phone:
+    number: +12766885567

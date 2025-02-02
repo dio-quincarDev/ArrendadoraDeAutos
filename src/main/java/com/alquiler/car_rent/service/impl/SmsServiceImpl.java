@@ -7,8 +7,11 @@ import com.alquiler.car_rent.service.SmsService;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class SmsServiceImpl implements SmsService{
+
 	@Value("${twilio.account.sid}")
     private String accountSid;
 
@@ -18,9 +21,15 @@ public class SmsServiceImpl implements SmsService{
     @Value("${twilio.phone.number}")
     private String fromPhoneNumber;
     
-    public SmsServiceImpl() {
+    
+    @PostConstruct
+    public void init() {
+    	 if (accountSid == null || authToken == null || fromPhoneNumber == null) {
+             throw new IllegalStateException("Las credenciales de Twilio no están configuradas correctamente.");
+         }
         Twilio.init(accountSid, authToken);
     }
+ 
 
 	@Override
 	public void sendSms(String to, String message) {
