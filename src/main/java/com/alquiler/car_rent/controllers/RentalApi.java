@@ -24,7 +24,7 @@ public interface RentalApi {
 	ResponseEntity<List<RentalDto>>getAllRentals();
 	
 	@GetMapping("/{id}")
-	ResponseEntity<RentalDto>getRentalById(@PathVariable Long id, @RequestBody RentalDto rentalDto);
+	ResponseEntity<RentalDto>getRentalById(@PathVariable Long id);
 	
     @PutMapping("/{id}")
 	ResponseEntity<RentalDto> updateRental(@PathVariable Long id, @RequestBody RentalDto rentalDto);

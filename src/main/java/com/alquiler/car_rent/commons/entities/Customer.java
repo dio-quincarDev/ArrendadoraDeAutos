@@ -3,6 +3,8 @@ package com.alquiler.car_rent.commons.entities;
 import java.time.LocalDateTime;
 
 import com.alquiler.car_rent.commons.enums.CustomerStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -47,14 +49,15 @@ public class Customer {
 	
 
 	@NotBlank(message = "Numero de Telefono Obligatorio")
-    @Pattern(regexp = "^\\+?[0-9]{10,12}$", message = "Formato de teléfono inválido")
+    @Pattern(regexp = "^\\+\\d{1,3}\\d{8,16}$", message = "Formato de teléfono inválido")
 	private String phone;
 	
 	@Enumerated(EnumType.STRING)
 	private CustomerStatus customerStatus;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime createdAt;
-	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime updatedAt;
 	
 	@PrePersist

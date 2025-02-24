@@ -1,7 +1,5 @@
 package com.alquiler.car_rent.commons.dtos;
 
-import java.time.LocalDateTime;
-
 
 public record CustomerDto(
         Long id, 
@@ -9,8 +7,5 @@ public record CustomerDto(
         String email, 
         String license, 
         String phone,
-        String customerStatus, 
-        LocalDateTime createdAt, 
-        LocalDateTime updatedAt) {
-
+        String customerStatus) {
 }

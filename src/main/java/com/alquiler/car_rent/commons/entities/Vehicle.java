@@ -3,6 +3,9 @@ package com.alquiler.car_rent.commons.entities;
 import java.time.LocalDateTime;
 
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,14 +39,15 @@ public class Vehicle {
 	@NotBlank(message = "Modelo de Auto")
 	private String model;
 	
-	private int year;
+	private Integer year;
 	
-	@NotBlank(message = "Matricula del Auto Obligatoria")
+	@Column(name = "plate", nullable = false, unique = true)
 	private String plate;
 	
 	@Enumerated(EnumType.STRING)
 	private VehicleStatus status;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime createdAt;
 	
 	@PrePersist

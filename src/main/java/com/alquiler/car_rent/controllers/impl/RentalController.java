@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alquiler.car_rent.commons.dtos.RentalDto;
-import com.alquiler.car_rent.commons.mappers.RentalMapper;
 import com.alquiler.car_rent.controllers.RentalApi;
 import com.alquiler.car_rent.service.RentalService;
 
@@ -14,11 +13,8 @@ import com.alquiler.car_rent.service.RentalService;
 public class RentalController implements RentalApi {
 	
 	private final RentalService rentalService;
-	private final RentalMapper rentalMapper;
-	
-	public RentalController(RentalService rentalService, RentalMapper rentalMapper) {
+	public RentalController(RentalService rentalService) {
         this.rentalService = rentalService;
-        this.rentalMapper = rentalMapper;
     }
 
 	@Override
@@ -34,7 +30,7 @@ public class RentalController implements RentalApi {
 	}
 
 	@Override
-	public ResponseEntity<RentalDto> getRentalById(Long id, RentalDto rentalDto) {
+	public ResponseEntity<RentalDto> getRentalById(Long id) {
 		return rentalService.findRentalById(id)
 				.map(ResponseEntity::ok)
 				.orElse(ResponseEntity.notFound().build());

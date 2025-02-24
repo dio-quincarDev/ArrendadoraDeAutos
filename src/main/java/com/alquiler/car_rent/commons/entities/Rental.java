@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.alquiler.car_rent.commons.enums.RentalStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -43,12 +45,16 @@ public class Rental {
 	@Enumerated(EnumType.STRING)
 	private RentalStatus rentalStatus;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime startDate;
-	
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime endDate;
 	
 	private BigDecimal totalPrice;
 	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+
 	private LocalDateTime createdAt;
 	
 	@PrePersist

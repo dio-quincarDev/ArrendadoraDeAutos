@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alquiler.car_rent.commons.dtos.VehicleDto;
-import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.controllers.VehicleApi;
 import com.alquiler.car_rent.service.VehicleService;
 

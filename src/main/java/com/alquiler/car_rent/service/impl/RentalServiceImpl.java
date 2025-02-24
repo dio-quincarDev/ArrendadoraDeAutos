@@ -13,6 +13,7 @@ import com.alquiler.car_rent.commons.enums.RentalStatus;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.RentalMapper;
 import com.alquiler.car_rent.exceptions.NotFoundException;
+import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.RentalService;
@@ -21,11 +22,14 @@ import com.alquiler.car_rent.service.RentalService;
 public class RentalServiceImpl implements RentalService{
 	private final RentalRepository rentalRepository;
 	private final VehicleRepository vehicleRepository;
+	private final CustomerRepository customerRepository;
 	private final RentalMapper rentalMapper;
 	
-	public RentalServiceImpl(RentalRepository rentalRepository, VehicleRepository vehicleRepository, RentalMapper rentalMapper) {
+	public RentalServiceImpl(RentalRepository rentalRepository, VehicleRepository vehicleRepository, 
+			CustomerRepository customerRepository, RentalMapper rentalMapper) {
 		this.rentalRepository = rentalRepository;
 		this.vehicleRepository = vehicleRepository;
+		this.customerRepository = customerRepository;
 		this.rentalMapper = rentalMapper;
 	}
 
@@ -48,17 +52,26 @@ public class RentalServiceImpl implements RentalService{
 	public RentalDto createRental(RentalDto rentalDto) {
 		
 		Rental rental = rentalMapper.dtoToRental(rentalDto);
-		Vehicle vehicle = vehicleRepository.findById(rental.getVehicle().getId())
-	    		  .orElseThrow(()-> new NotFoundException("Vehiculo No Encontrado por ID: " + rental.getVehicle().getId()));
-	      if(vehicle.getStatus() != VehicleStatus.AVAILABLE) {
-	    	  throw new IllegalArgumentException("El vehiculo no esta Disponible para alquiler");
-	      }
-	      
+		
+		
+		 // Obtener el Cliente
+	    rental.setCustomer(customerRepository.findById(rentalDto.customerId())
+	        .orElseThrow(() -> new NotFoundException("Cliente No Encontrado por ID: " + rentalDto.customerId())));
+
+	    // Obtener el Vehículo
+	    Vehicle vehicle = vehicleRepository.findById(rentalDto.vehicleId())
+	        .orElseThrow(() -> new NotFoundException("Vehiculo No Encontrado por ID: " + rentalDto.vehicleId()));
+
+	    // Validar disponibilidad
+	    if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
+	        throw new IllegalArgumentException("El vehiculo no está disponible para alquiler");
+	    }
 	      //Actualiza el estado del vehiculo
 	      vehicle.setStatus(VehicleStatus.RENTED);
 	      vehicleRepository.save(vehicle);
 	      
 	      //Info de Alquiler
+	      rental.setVehicle(vehicle);
 	      rental.setCreatedAt(LocalDateTime.now());
 	      rental.setRentalStatus(RentalStatus.ACTIVE);
 	      
@@ -84,6 +97,7 @@ public class RentalServiceImpl implements RentalService{
 	    return rentalRepository.findById(id)
 	            .map(rental -> {
 	                rental.setRentalStatus(RentalStatus.CANCELLED);
+	                rentalRepository.save(rental);
 	                return rentalMapper.rentalToDto(rentalRepository.save(rental));
 	            })
 	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));

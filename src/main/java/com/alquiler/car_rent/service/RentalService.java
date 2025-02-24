@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.alquiler.car_rent.commons.dtos.RentalDto;
-import com.alquiler.car_rent.commons.entities.Rental;
 
 public interface RentalService {
 	

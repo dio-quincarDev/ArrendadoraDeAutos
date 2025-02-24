@@ -56,6 +56,7 @@ public class CustomerServiceImpl implements CustomerService {
 	                    existingCustomer.setEmail(customerDto.email());
 	                    existingCustomer.setPhone(customerDto.phone());
 	                    existingCustomer.setLicense(customerDto.license());
+	                    customerRepository.save(existingCustomer);
 	                    return customerMapper.customerToDto(customerRepository.save(existingCustomer));
 	                })
 	                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + id));

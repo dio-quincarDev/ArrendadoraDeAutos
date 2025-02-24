@@ -57,8 +57,10 @@ public class VehicleServiceImpl implements VehicleService {
 				.map(existingVehicle-> {
 					existingVehicle.setBrand(vehicleDto.brand());
 					existingVehicle.setModel(vehicleDto.model());
+					existingVehicle.setYear(vehicleDto.year());
 					existingVehicle.setPlate(vehicleDto.plate());
 					existingVehicle.setStatus(vehicleDto.status());
+					vehicleRepository.save(existingVehicle);
 					return vehicleMapper.vehicleToDto(vehicleRepository.save(existingVehicle));
 				})
 		.orElseThrow(()-> new IllegalArgumentException("Vehiculo no encontrado con el ID" + id));
