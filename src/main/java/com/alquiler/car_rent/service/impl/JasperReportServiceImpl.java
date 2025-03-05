@@ -1,13 +1,15 @@
 package com.alquiler.car_rent.service.impl;
 
-import java.io.File;
-
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import com.alquiler.car_rent.commons.entities.Rental;
@@ -23,35 +25,44 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 
 @Service
 public class JasperReportServiceImpl implements JasperReportService {
-	
-	private final RentalRepository rentalRepository;
-	 public JasperReportServiceImpl(RentalRepository rentalRepository ) {
-		 this.rentalRepository = rentalRepository;
-	 }
+    private static final Logger logger = LoggerFactory.getLogger(JasperReportServiceImpl.class);
+    
+    private final RentalRepository rentalRepository;
 
-	@Override
-	public File generateMonthlyRentalReport() throws IOException {
-		List<Rental>rentals = rentalRepository.findAll();
-		
-		File reportFile = new File ("rental_report.pdf");
-		
-		try {
+    public JasperReportServiceImpl(RentalRepository rentalRepository) {
+        this.rentalRepository = rentalRepository;
+    }
 
-            JasperReport jasperReport = JasperCompileManager.compileReport("src/main/resources/reports/rental_report.jrxml");
+    @Override
+    public byte[] generateMonthlyRentalReport() throws IOException {
+        List<Rental> rentals = rentalRepository.findAll();
+        
+        if (rentals.isEmpty()) {
+            logger.warn("No rental data available for report generation");
+            throw new IOException("No hay datos para generar el reporte.");
+        }
 
+        try (InputStream reportStream = new ClassPathResource("reports/rental_report.jrxml").getInputStream();
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            
+            logger.info("Generating monthly rental report for {} rentals", rentals.size());
+            
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
             JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(rentals);
+            
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("ReportTitle", "Reporte de Alquileres del Mes");
-
+            
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
-
-            FileOutputStream outputStream = new FileOutputStream(reportFile);
             JasperExportManager.exportReportToPdfStream(jasperPrint, outputStream);
+            
+            byte[] reportBytes = outputStream.toByteArray();
+            logger.info("Monthly rental report generated successfully");
+            
+            return reportBytes;
         } catch (Exception e) {
+            logger.error("Error generating monthly rental report", e);
             throw new IOException("Error generando el reporte", e);
-		}
-		
-		return reportFile;
-	}
-
+        }
+    }
 }

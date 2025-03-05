@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="RentalReport" pageWidth="595" pageHeight="842">
+
+  	<queryString>
+    	<![CDATA[SELECT r.id, c.name AS customerName, v.brand AS vehicleModel,
+              r.rentalStatus, r.startDate, r.endDate, r.totalPrice 
+              FROM rentals r
+              JOIN customers c ON r.customer_id = c.id
+              JOIN vehicles v ON r.vehicle_id = v.id]]>
+	</queryString>
+
+
+    <field name="id" class="java.lang.Long"/>
+    <field name="customer_name" class="java.lang.String"/>
+    <field name="vehicle_model" class="java.lang.String"/>
+    <field name="rentalStatus" class="java.lang.String"/>
+    <field name="startDate" class="java.util.Date"/>
+    <field name="endDate" class="java.util.Date"/>
+    <field name="totalPrice" class="java.math.BigDecimal"/>
+
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="0" width="595" height="50"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Reporte de Alquileres]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="100" height="20"/>
+                <textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="110" y="0" width="150" height="20"/>
+                <textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="270" y="0" width="100" height="20"/>
+                <textFieldExpression><![CDATA[$F{vehicle_brand}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+</jasperReport>
