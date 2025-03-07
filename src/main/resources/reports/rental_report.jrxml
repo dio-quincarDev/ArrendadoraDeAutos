@@ -2,50 +2,108 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
-              name="RentalReport" pageWidth="595" pageHeight="842">
-
-  	<queryString>
-    	<![CDATA[SELECT r.id, c.name AS customerName, v.brand AS vehicleModel,
-              r.rentalStatus, r.startDate, r.endDate, r.totalPrice 
-              FROM rentals r
-              JOIN customers c ON r.customer_id = c.id
-              JOIN vehicles v ON r.vehicle_id = v.id]]>
-	</queryString>
-
+              name="RentalReport" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
 
     <field name="id" class="java.lang.Long"/>
-    <field name="customer_name" class="java.lang.String"/>
-    <field name="vehicle_model" class="java.lang.String"/>
-    <field name="rentalStatus" class="java.lang.String"/>
-    <field name="startDate" class="java.util.Date"/>
-    <field name="endDate" class="java.util.Date"/>
+    <field name="customerName" class="java.lang.String"/>
+    <field name="vehicleBrand" class="java.lang.String"/>
+    <field name="vehicleModel" class="java.lang.String"/>
+    <field name="rentalStatus" class="com.alquiler.car_rent.commons.enums.RentalStatus"/>
+    <field name="startDate" class="java.time.LocalDateTime"/>
+    <field name="endDate" class="java.time.LocalDateTime"/>
     <field name="totalPrice" class="java.math.BigDecimal"/>
 
     <title>
         <band height="50">
             <staticText>
-                <reportElement x="0" y="0" width="595" height="50"/>
-                <textElement textAlignment="Center"/>
+                <reportElement x="0" y="0" width="555" height="50"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="16" isBold="true"/>
+                </textElement>
                 <text><![CDATA[Reporte de Alquileres]]></text>
             </staticText>
         </band>
     </title>
 
+    <columnHeader>
+        <band height="30">
+            <staticText>
+                <reportElement x="0" y="0" width="50" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[ID]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="50" y="0" width="100" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Cliente]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="150" y="0" width="80" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Marca]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="230" y="0" width="80" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Modelo]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="310" y="0" width="80" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Estado]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="390" y="0" width="80" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Precio]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
     <detail>
         <band height="20">
             <textField>
-                <reportElement x="0" y="0" width="100" height="20"/>
+                <reportElement x="0" y="0" width="50" height="20"/>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
             </textField>
             <textField>
-                <reportElement x="110" y="0" width="150" height="20"/>
-                <textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression>
+                <reportElement x="50" y="0" width="100" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{customerName}]]></textFieldExpression>
             </textField>
             <textField>
-                <reportElement x="270" y="0" width="100" height="20"/>
-                <textFieldExpression><![CDATA[$F{vehicle_brand}]]></textFieldExpression>
+                <reportElement x="150" y="0" width="80" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{vehicleBrand}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="230" y="0" width="80" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{vehicleModel}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="310" y="0" width="80" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{rentalStatus}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="390" y="0" width="80" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{totalPrice}]]></textFieldExpression>
             </textField>
         </band>
     </detail>
-
 </jasperReport>

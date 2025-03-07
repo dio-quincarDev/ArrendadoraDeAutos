@@ -6,13 +6,16 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import com.alquiler.car_rent.commons.dtos.RentalDto;
 import com.alquiler.car_rent.commons.entities.Rental;
+import com.alquiler.car_rent.commons.mappers.RentalMapper;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.JasperReportService;
 
@@ -28,9 +31,11 @@ public class JasperReportServiceImpl implements JasperReportService {
     private static final Logger logger = LoggerFactory.getLogger(JasperReportServiceImpl.class);
     
     private final RentalRepository rentalRepository;
+    private final RentalMapper rentalMapper;
 
-    public JasperReportServiceImpl(RentalRepository rentalRepository) {
+    public JasperReportServiceImpl(RentalRepository rentalRepository, RentalMapper rentalMapper) {
         this.rentalRepository = rentalRepository;
+        this.rentalMapper = rentalMapper;
     }
 
     @Override
@@ -41,6 +46,11 @@ public class JasperReportServiceImpl implements JasperReportService {
             logger.warn("No rental data available for report generation");
             throw new IOException("No hay datos para generar el reporte.");
         }
+        
+        // Convertir entidades a DTOs para el reporte
+        List<RentalDto> rentalDtos = rentals.stream()
+                .map(rentalMapper::rentalToDto)
+                .collect(Collectors.toList());
 
         try (InputStream reportStream = new ClassPathResource("reports/rental_report.jrxml").getInputStream();
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -48,7 +58,7 @@ public class JasperReportServiceImpl implements JasperReportService {
             logger.info("Generating monthly rental report for {} rentals", rentals.size());
             
             JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
-            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(rentals);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(rentalDtos);
             
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("ReportTitle", "Reporte de Alquileres del Mes");
@@ -61,8 +71,8 @@ public class JasperReportServiceImpl implements JasperReportService {
             
             return reportBytes;
         } catch (Exception e) {
-            logger.error("Error generating monthly rental report", e);
-            throw new IOException("Error generando el reporte", e);
+            logger.error("Error generating monthly rental report: {}", e.getMessage(), e);
+            throw new IOException("Error generando el reporte: " + e.getMessage(), e);
         }
     }
 }

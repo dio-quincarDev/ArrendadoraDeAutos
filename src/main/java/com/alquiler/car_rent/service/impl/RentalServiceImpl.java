@@ -55,12 +55,12 @@ public class RentalServiceImpl implements RentalService{
 		
 		
 		 // Obtener el Cliente
-	    rental.setCustomer(customerRepository.findById(rentalDto.customerId())
-	        .orElseThrow(() -> new NotFoundException("Cliente No Encontrado por ID: " + rentalDto.customerId())));
+	    rental.setCustomer(customerRepository.findById(rentalDto.getCustomerId())
+	        .orElseThrow(() -> new NotFoundException("Cliente No Encontrado por ID: " + rentalDto.getCustomerId())));
 
 	    // Obtener el Vehículo
-	    Vehicle vehicle = vehicleRepository.findById(rentalDto.vehicleId())
-	        .orElseThrow(() -> new NotFoundException("Vehiculo No Encontrado por ID: " + rentalDto.vehicleId()));
+	    Vehicle vehicle = vehicleRepository.findById(rentalDto.getVehicleId())
+	        .orElseThrow(() -> new NotFoundException("Vehiculo No Encontrado por ID: " + rentalDto.getVehicleId()));
 
 	    // Validar disponibilidad
 	    if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
@@ -83,9 +83,9 @@ public class RentalServiceImpl implements RentalService{
 		
 		return rentalRepository.findById(id)
                 .map(existingRental -> {
-                    existingRental.setStartDate(rentalDto.startDate());
-                    existingRental.setEndDate(rentalDto.endDate());
-                    existingRental.setTotalPrice(rentalDto.totalPrice());
+                    existingRental.setStartDate(rentalDto.getStartDate());
+                    existingRental.setEndDate(rentalDto.getEndDate());
+                    existingRental.setTotalPrice(rentalDto.getTotalPrice());
                     return rentalMapper.rentalToDto(rentalRepository.save(existingRental));
                 })
                 .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
