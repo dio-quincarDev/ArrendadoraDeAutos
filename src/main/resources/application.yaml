@@ -37,3 +37,8 @@ twilio:
     token: 317d3dec6ed226d15aacbc62dc97b5e8
   phone:
     number: +12766885567
+jwt:
+  secret: tDRRl8rqyhx05TfgfrQXBgI4qsJkGiuPGo6FwhSSKHO5eeR/emr5pOTV2GqpQG6RLCB/Ey4eAzUEcBQ33VY5Ng==
+  header: Authorization
+  prefix: Bearer
+  expiration-time: 86400000
