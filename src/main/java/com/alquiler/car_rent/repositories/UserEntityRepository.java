@@ -8,6 +8,6 @@ import com.alquiler.car_rent.commons.entities.UserEntity;
 
 public interface UserEntityRepository extends JpaRepository<UserEntity, Long > {
 	
-	Optional<UserEntity> findByUsername(String username);
+	Optional<UserEntity> findByEmail(String email);
 
 }
