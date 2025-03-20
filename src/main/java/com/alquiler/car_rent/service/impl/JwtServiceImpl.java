@@ -65,15 +65,16 @@ public class JwtServiceImpl implements JwtService {
 	
 	}
 
-	@Override
-	public boolean isExpired(String token) {
-		try {
-			return getClaims(token).getExpiration.before(new Date());
-		} catch(Exception e) {
-			return true;
-		}
-	
-	}
+	 @Override
+	 public boolean isExpired(String token) {
+	     try {
+	         Claims claims = getClaims(token);
+	         Date expiration = claims.getExpiration();
+	         return expiration.before(new Date());
+	     } catch (Exception e) {
+	         return true;
+	     }
+	 }
 
 	@Override
 	public Integer extractUserEntityId(String token) {
