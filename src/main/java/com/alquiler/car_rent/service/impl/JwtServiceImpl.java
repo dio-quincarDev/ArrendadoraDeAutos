@@ -12,7 +12,6 @@ import com.alquiler.car_rent.commons.dtos.TokenResponse;
 import com.alquiler.car_rent.service.JwtService;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
