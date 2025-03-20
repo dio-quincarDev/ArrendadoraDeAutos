@@ -12,12 +12,14 @@ import com.alquiler.car_rent.commons.dtos.TokenResponse;
 import com.alquiler.car_rent.service.JwtService;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtServiceImpl implements JwtService {
+
 	
 	private final SecretKey secretKey;
 	private static final long EXPIRATION_TIME = 864000000;
@@ -27,6 +29,7 @@ public class JwtServiceImpl implements JwtService {
 	            throw new IllegalArgumentException("Secret key must be at least 32 characters long.");
 	        }
 	        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+	      
 	    }
 
 	@Override
@@ -49,20 +52,43 @@ public class JwtServiceImpl implements JwtService {
 
 	@Override
 	public Claims getClaims(String token) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			return Jwts.parser()
+					.verifyWith(secretKey)
+					.build()
+					.parseSignedClaims(token)
+					.getPayload();
+		} catch (Exception e) {
+			System.err.println("Error Parsing JWT: " + e.getMessage());
+			throw new IllegalArgumentException("Invalid JWT Token", e);
+		}
+	
 	}
 
 	@Override
 	public boolean isExpired(String token) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			return getClaims(token).getExpiration.before(new Date());
+		} catch(Exception e) {
+			return true;
+		}
+	
 	}
 
 	@Override
 	public Integer extractUserEntityId(String token) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			Claims claims = getClaims(token);
+			Object userIdClaim = claims.get("userEntityId");
+			if (userIdClaim == null) {
+				throw new IllegalArgumentException("No userId claim found for token");
+			}
+			return ((Number) claims.get("userId")).intValue();
+		} catch (IllegalArgumentException e) {
+			System.err.println("Error extrayendo token" + e.getMessage());
+            return null;
+		}
+	
 	}
 
 }

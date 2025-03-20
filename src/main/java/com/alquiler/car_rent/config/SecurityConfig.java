@@ -14,7 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     // Definir constante para la ruta base de la API
-    private static final String V1_ROUTE = "/api/v1";
+    private static final String V1_ROUTE = "/v1";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,15 +28,15 @@ public class SecurityConfig {
                     "/login"
                 ).permitAll()
                 
-                // Endpoints exclusivos para MANAGER
+                // Endpoint exclusivos para MANAGER
                 .requestMatchers(V1_ROUTE + "/users/**").hasRole("MANAGER")
                 
-                // Operaciones de escritura en customers y vehicles solo para MANAGER
+                // Operaciones de escritura en customers y vehicles para MANAGER y ADMIN
                 .requestMatchers(
                     HttpMethod.POST, 
                     V1_ROUTE + "/customers/**", 
                     V1_ROUTE + "/vehicles/**"
-                ).hasRole("MANAGER")
+                ).hasAnyRole("MANAGER", "ADMIN")
                 .requestMatchers(
                     HttpMethod.PUT, 
                     V1_ROUTE + "/customers/**", 
@@ -46,7 +46,7 @@ public class SecurityConfig {
                     HttpMethod.DELETE, 
                     V1_ROUTE + "/customers/**", 
                     V1_ROUTE + "/vehicles/**"
-                ).hasRole("MANAGER")
+                ).hasAnyRole("MANAGER", "ADMIN")
                 
                 // Endpoints compartidos entre MANAGER y ADMIN
                 .requestMatchers(V1_ROUTE + "/rentals/**").hasAnyRole("MANAGER", "ADMIN")
