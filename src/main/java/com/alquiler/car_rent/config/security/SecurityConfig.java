@@ -12,7 +12,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
-import com.alquiler.car_rent.config.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
