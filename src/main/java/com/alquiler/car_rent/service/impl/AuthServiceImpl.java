@@ -9,7 +9,6 @@ import com.alquiler.car_rent.commons.dtos.LoginRequest;
 import com.alquiler.car_rent.commons.dtos.TokenResponse;
 import com.alquiler.car_rent.commons.dtos.UserEntityRequest;
 import com.alquiler.car_rent.commons.entities.UserEntity;
-import com.alquiler.car_rent.commons.enums.Role;
 import com.alquiler.car_rent.repositories.UserEntityRepository;
 import com.alquiler.car_rent.service.AuthService;
 import com.alquiler.car_rent.service.JwtService;
