@@ -9,5 +9,6 @@ import com.alquiler.car_rent.commons.enums.RentalStatus;
 public interface RentalRepository extends JpaRepository<Rental, Long> {
 	List<Rental>findByRentalStatus(RentalStatus rentalStatus);
 	List<Rental>findByRentalStatusAndEndDateBetween(RentalStatus rentalStatus, LocalDateTime start, LocalDateTime end);
+	List<Rental>findByEndDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
 }
