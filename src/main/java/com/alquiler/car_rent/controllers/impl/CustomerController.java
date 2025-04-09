@@ -10,7 +10,6 @@ import com.alquiler.car_rent.controllers.CustomerApi;
 import com.alquiler.car_rent.service.CustomerService;
 
 @RestController
-
 public class CustomerController implements CustomerApi{
 	
 	private final CustomerService customerService;

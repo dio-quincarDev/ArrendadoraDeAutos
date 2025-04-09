@@ -1,6 +1,7 @@
 package com.alquiler.car_rent.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 public interface AuthApi {
 
     @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<TokenResponse> createUser(@RequestBody @Valid UserEntityRequest userEntityRequest);
 
     @PostMapping("/login")

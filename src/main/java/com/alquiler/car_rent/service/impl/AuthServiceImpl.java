@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
 		return Optional.of(userEntityRequest)
 				.map(this::mapToEntity)
 				.map(userEntityRepository::save)
-				.map(userCreated-> jwtService.generateToken(userCreated.getId()))
+				.map(userCreated -> jwtService.generateToken(userCreated.getId(), String.valueOf(userCreated.getRole())))
 				.orElseThrow(()-> new RuntimeException("Error creando Usuario"));
 	}
 
@@ -44,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
 		if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
 			throw new IllegalArgumentException("Invalid Password ");
 		}
-		return jwtService.generateToken(user.getId());
+		return jwtService.generateToken(user.getId(), String.valueOf(user.getRole()));
 	}
 	
 	private UserEntity mapToEntity (UserEntityRequest userEntityRequest) {

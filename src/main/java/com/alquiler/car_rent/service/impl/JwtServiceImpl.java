@@ -26,16 +26,17 @@ public class JwtServiceImpl implements JwtService {
     }
     
     @Override
-    public TokenResponse generateToken(Long userEntityId) {
+    public TokenResponse generateToken(Long userEntityId,String role) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
         
         String token = Jwts.builder()
                 .subject(String.valueOf(userEntityId))
-                .claim("userEntityId", userEntityId) // Corregido: era "useEntityId"
+                .claim("userEntityId", userEntityId)
+                .claim("role", role)
                 .issuedAt(now)
                 .expiration(expirationDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
         
         return TokenResponse.builder()
@@ -76,10 +77,15 @@ public class JwtServiceImpl implements JwtService {
             if (userIdClaim == null) {
                 throw new IllegalArgumentException("No userEntityId claim found for token");
             }
-            return ((Number) userIdClaim).intValue(); // Corregido: era "userId"
+            return ((Number) userIdClaim).intValue(); 
         } catch (Exception e) {
             System.err.println("Error extrayendo token: " + e.getMessage());
             return null;
         }
+    }
+
+    @Override
+    public String extractRole(String token) {
+        return getClaims(token).get("role", String.class);
     }
 }

@@ -38,7 +38,7 @@ twilio:
   phone:
     number: +12766885567
 jwt:
-  secret: tDRRl8rqyhx05TfgfrQXBgI4qsJkGiuPGo6FwhSSKHO5eeR/emr5pOTV2GqpQG6RLCB/Ey4eAzUEcBQ33VY5Ng==
+  secret: TMy6jvnM8uXem/ZUkLaMZNFiLODcKF/E5CMGizcp8vNmTILlFSjuKZP45rup83ii72ybBq6Uh5kBGSQe32Pevg==
   header: Authorization
   prefix: Bearer
   expiration-time: 86400000

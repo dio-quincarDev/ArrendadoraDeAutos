@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -44,6 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 // Extraer ID de usuario del token
                 Integer userEntityId = jwtService.extractUserEntityId(token);
+                String role = jwtService.extractRole(token);
                 
                 if (userEntityId != null) {
                     // Buscar el usuario en la base de datos
@@ -53,9 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         UserEntity user = userOptional.get();
                         
                         // Crear la autenticación con las autoridades del usuario
-                        var authorities = Collections.singletonList(
-                            new SimpleGrantedAuthority(user.getRole().name())
-                        );
+                        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
                         
                         var authentication = new UsernamePasswordAuthenticationToken(
                             user.getEmail(),

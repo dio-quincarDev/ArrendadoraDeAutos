@@ -3,6 +3,7 @@ package com.alquiler.car_rent.controllers;
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 public interface ReportingApi {
 
     @GetMapping(produces = "text/html")
+    @PreAuthorize("hasRole('ADMIN')")
     String viewReport(
         @RequestParam(defaultValue = "MONTHLY") TimePeriod period,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -24,6 +26,7 @@ public interface ReportingApi {
     );
 
     @GetMapping("/export")
+    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<byte[]> exportReport(
         @RequestParam(defaultValue = "PDF") OutputFormat format,
         @RequestParam(defaultValue = "RENTAL_SUMMARY") ReportType reportType,
