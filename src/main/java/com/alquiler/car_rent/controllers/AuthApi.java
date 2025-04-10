@@ -19,7 +19,6 @@ import jakarta.validation.Valid;
 public interface AuthApi {
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<TokenResponse> createUser(@RequestBody @Valid UserEntityRequest userEntityRequest);
 
     @PostMapping("/login")

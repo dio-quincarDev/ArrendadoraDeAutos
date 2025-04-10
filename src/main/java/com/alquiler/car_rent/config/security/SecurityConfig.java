@@ -53,7 +53,7 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
                                 ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasAnyRole("USER", "ADMIN")
+                        ).hasAnyRole("USERS", "ADMIN")
                         .requestMatchers(
                                 HttpMethod.POST,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
@@ -63,7 +63,7 @@ public class SecurityConfig {
                                 HttpMethod.PUT,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
                                 ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasAnyRole("USER", "ADMIN")
+                        ).hasAnyRole("USERS", "ADMIN")
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
@@ -71,7 +71,7 @@ public class SecurityConfig {
                         ).hasRole("ADMIN")
 
                         // Endpoints para rentals
-                        .requestMatchers(ApiPathConstants.V1_ROUTE + "/rentals/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + "/rentals/**").hasAnyRole("USERS", "ADMIN")
 
                         // Cualquier otra solicitud requiere autenticación
                         .anyRequest().authenticated()

@@ -42,3 +42,9 @@ jwt:
   header: Authorization
   prefix: Bearer
   expiration-time: 86400000
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

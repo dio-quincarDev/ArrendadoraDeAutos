@@ -14,36 +14,39 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtServiceImpl implements JwtService {
-    
+
     private final SecretKey secretKey;
     private static final long EXPIRATION_TIME = 864_000_000; // 10 días
-    
+
     public JwtServiceImpl(@Value("${jwt.secret}") String secret) {
         if (secret.getBytes().length < 32) {
             throw new IllegalArgumentException("Secret key must be at least 32 characters long.");
         }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
-    
+
     @Override
-    public TokenResponse generateToken(Long userEntityId,String role) {
+    public TokenResponse generateToken(Long userEntityId, String role) {
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
-        
+
+        // Asegurar que el rol no incluya ya el prefijo ROLE_
+        String normalizedRole = role.startsWith("ROLE_") ? role.substring(5) : role;
+
         String token = Jwts.builder()
                 .subject(String.valueOf(userEntityId))
                 .claim("userEntityId", userEntityId)
-                .claim("role", role)
+                .claim("role", normalizedRole)  // Guardar el rol sin prefijo
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
-        
+
         return TokenResponse.builder()
                 .accesToken(token)
                 .build();
     }
-    
+
     @Override
     public Claims getClaims(String token) {
         try {
@@ -57,7 +60,7 @@ public class JwtServiceImpl implements JwtService {
             throw new IllegalArgumentException("Invalid JWT Token", e);
         }
     }
-    
+
     @Override
     public boolean isExpired(String token) {
         try {
@@ -68,16 +71,16 @@ public class JwtServiceImpl implements JwtService {
             return true;
         }
     }
-    
+
     @Override
     public Integer extractUserEntityId(String token) {
         try {
             Claims claims = getClaims(token);
-            Object userIdClaim = claims.get("userEntityId"); // Corregido: era "userEntityId"
+            Object userIdClaim = claims.get("userEntityId");
             if (userIdClaim == null) {
                 throw new IllegalArgumentException("No userEntityId claim found for token");
             }
-            return ((Number) userIdClaim).intValue(); 
+            return ((Number) userIdClaim).intValue();
         } catch (Exception e) {
             System.err.println("Error extrayendo token: " + e.getMessage());
             return null;

@@ -18,23 +18,18 @@ import com.alquiler.car_rent.commons.dtos.VehicleDto;
 @RequestMapping(ApiPathConstants.V1_ROUTE + "/vehicles" )
 public interface VehicleApi {
 	@PostMapping
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 	ResponseEntity<VehicleDto>createVehicle(@RequestBody VehicleDto vehicleDto);
 	
 	@GetMapping
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 	ResponseEntity<List<VehicleDto>>getAllVehicles();
 	
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 	ResponseEntity<VehicleDto>getVehicleById(@PathVariable Long id);
 	
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 	ResponseEntity<VehicleDto>updateVehicle(@PathVariable Long id, @RequestBody VehicleDto vehicleDto);
 	
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 	ResponseEntity<Void>deleteVehicle(Long id);
 
 }
