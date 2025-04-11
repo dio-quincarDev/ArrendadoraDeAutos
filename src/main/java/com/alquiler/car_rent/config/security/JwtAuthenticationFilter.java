@@ -104,7 +104,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // *** LA CORRECCIÓN CLAVE (se mantiene igual) ***
             // Crear la autoridad directamente con el nombre del rol extraído del token.
-            List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(roleName));
+            List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName));
             log.debug("Creating Authentication object with principal: {} and authorities: {}", principal, authorities);
 
             // Crear el objeto Authentication
