@@ -15,11 +15,6 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect # Dialecto específico para MySQL
     defer-datasource-initialization: true # Evita problemas de inicialización
 
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    enabled: true
-    cache: false
 
 server:
   port: 8080

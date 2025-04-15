@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.Font;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -18,13 +19,16 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.util.List;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -258,11 +262,113 @@ public class ReportingServiceImpl implements ReportingService {
         
         return outputStream.toByteArray();
     }
-    
-    
-    private byte[] generateExcelReport(ReportType reportType, Map<String, Object> data) {
-        // Implementación básica - se requeriría Apache POI para una implementación real
-        throw new UnsupportedOperationException("Exportación a Excel no implementada");
+
+
+    private byte[] generateExcelReport(ReportType reportType, Map<String, Object> data) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet summarySheet = workbook.createSheet("Resumen de Ingresos");
+        Sheet detailsSheet = workbook.createSheet("Detalles de Alquileres");
+
+        // Estilos para los encabezados
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        CellStyle headerStyle = workbook.createCellStyle();
+        headerStyle.setFont(headerFont);
+
+        LocalDate startDate = (LocalDate) data.get("startDate");
+        LocalDate endDate = (LocalDate) data.get("endDate");
+        Long totalRentals = (Long) data.get("totalRentals");
+        Double totalRevenue = (Double) data.get("totalRevenue");
+        @SuppressWarnings("unchecked")
+        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                startDate.atStartOfDay(),
+                endDate.plusDays(1).atStartOfDay()
+        );
+
+        // --- Hoja de Resumen de Ingresos ---
+        Row titleRow = summarySheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("Resumen de Ingresos por Alquiler");
+        Font titleFont = workbook.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 16);
+        CellStyle titleStyle = workbook.createCellStyle();
+        titleStyle.setFont(titleFont);
+        titleCell.setCellStyle(titleStyle);
+
+        Row dateStartRow = summarySheet.createRow(2);
+        dateStartRow.createCell(0).setCellValue("Fecha de Inicio");
+        dateStartRow.createCell(1).setCellValue(formatDate(startDate));
+
+        Row dateEndRow = summarySheet.createRow(3);
+        dateEndRow.createCell(0).setCellValue("Fecha de Fin");
+        dateEndRow.createCell(1).setCellValue(formatDate(endDate));
+
+        Row totalRevenueRow = summarySheet.createRow(5);
+        totalRevenueRow.createCell(0).setCellValue("Total de Ingresos Recaudados");
+        Cell revenueCell = totalRevenueRow.createCell(1);
+        revenueCell.setCellValue(totalRevenue);
+        CellStyle currencyStyle = workbook.createCellStyle();
+        DataFormat dataFormat = workbook.createDataFormat();
+        currencyStyle.setDataFormat(dataFormat.getFormat("$#,##0.00"));
+        revenueCell.setCellStyle(currencyStyle);
+
+        Row totalRentalsRow = summarySheet.createRow(6);
+        totalRentalsRow.createCell(0).setCellValue("Total de Alquileres");
+        totalRentalsRow.createCell(1).setCellValue(totalRentals);
+
+        // --- Hoja de Detalles de Alquileres ---
+        Row headerRowDetails = detailsSheet.createRow(0);
+        String[] headers = {"ID Alquiler", "ID Cliente", "Nombre Cliente", "ID Vehículo", "Marca Vehículo", "Modelo Vehículo", "Fecha Inicio Alquiler", "Fecha Fin Alquiler", "Precio Total"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRowDetails.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+
+        int rowNum = 1;
+        for (Rental rental : rentals) {
+            Row row = detailsSheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(rental.getId());
+
+            // Acceder a la ID del cliente a través de la relación
+            if (rental.getCustomer() != null) {
+                row.createCell(1).setCellValue(rental.getCustomer().getId());
+                row.createCell(2).setCellValue(rental.getCustomer().getName()); // Asumiendo que la entidad Customer tiene un campo 'name'
+            } else {
+                row.createCell(1).setCellValue("");
+                row.createCell(2).setCellValue("");
+            }
+
+            // Acceder a la información del vehículo a través de la relación
+            if (rental.getVehicle() != null) {
+                row.createCell(3).setCellValue(rental.getVehicle().getId());
+                row.createCell(4).setCellValue(rental.getVehicle().getBrand());
+                row.createCell(5).setCellValue(rental.getVehicle().getModel());
+            } else {
+                row.createCell(3).setCellValue("");
+                row.createCell(4).setCellValue("");
+                row.createCell(5).setCellValue("");
+            }
+
+            row.createCell(6).setCellValue(formatDate(LocalDate.from(rental.getStartDate())));
+            row.createCell(7).setCellValue(formatDate(LocalDate.from(rental.getEndDate())));
+            Cell priceCell = row.createCell(8);
+            priceCell.setCellValue(rental.getTotalPrice().doubleValue());
+            priceCell.setCellStyle(currencyStyle);
+        }
+
+        // Ajustar el ancho de las columnas para que quepa el contenido
+        for (int i = 0; i < headers.length; i++) {
+            detailsSheet.autoSizeColumn(i);
+        }
+        summarySheet.autoSizeColumn(0);
+        summarySheet.autoSizeColumn(1);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        return outputStream.toByteArray();
     }
     
     private String getReportTitle(ReportType reportType) {
