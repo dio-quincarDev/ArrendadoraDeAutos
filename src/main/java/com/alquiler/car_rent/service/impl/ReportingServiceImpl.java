@@ -2,6 +2,7 @@ package com.alquiler.car_rent.service.impl;
 
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.ReportingService;
@@ -10,7 +11,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
-import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -19,17 +21,15 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.util.List;
-
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,15 +38,18 @@ public class ReportingServiceImpl implements ReportingService {
     private static final Logger logger = LoggerFactory.getLogger(ReportingServiceImpl.class);
     private final RentalRepository rentalRepository;
     private final VehicleRepository vehicleRepository;
+    private final CustomerRepository customerRepository;
     private final ObjectMapper objectMapper;
 
     public ReportingServiceImpl(
-        RentalRepository rentalRepository,
-        VehicleRepository vehicleRepository, 
-        ObjectMapper objectMapper
+            RentalRepository rentalRepository,
+            VehicleRepository vehicleRepository,
+            CustomerRepository customerRepository,
+            ObjectMapper objectMapper
     ) {
         this.rentalRepository = rentalRepository;
         this.vehicleRepository = vehicleRepository;
+        this.customerRepository = customerRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -58,8 +61,8 @@ public class ReportingServiceImpl implements ReportingService {
         }
 
         List<Rental> rentals = rentalRepository.findByEndDateBetween(
-            startDate.atStartOfDay(),
-            endDate.plusDays(1).atStartOfDay()
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
         );
 
         Map<String, Object> reportData = new HashMap<>();
@@ -69,12 +72,12 @@ public class ReportingServiceImpl implements ReportingService {
         reportData.put("totalRentals", (long) rentals.size());
 
         double totalRevenue = rentals.stream()
-            .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
-            .sum();
+                .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
+                .sum();
         reportData.put("totalRevenue", totalRevenue);
 
         Map<Vehicle, Long> rentalCountsByVehicle = rentals.stream()
-            .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()));
+                .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()));
         reportData.put("rentalCountsByVehicle", rentalCountsByVehicle);
 
         return reportData;
@@ -82,11 +85,11 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public byte[] generateReport(
-        OutputFormat format, 
-        ReportType reportType, 
-        TimePeriod period, 
-        LocalDate startDate, 
-        LocalDate endDate
+            OutputFormat format,
+            ReportType reportType,
+            TimePeriod period,
+            LocalDate startDate,
+            LocalDate endDate
     ) {
         Map<String, Object> reportData = generateReportData(period, startDate, endDate);
         try {
@@ -104,7 +107,6 @@ public class ReportingServiceImpl implements ReportingService {
         }
     }
 
-    // Métodos auxiliares (generatePdfReport, generateJsonReport, etc.) como antes...
     private byte[] generatePdfReport(ReportType reportType, Map<String, Object> data) throws DocumentException, IOException {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -133,7 +135,6 @@ public class ReportingServiceImpl implements ReportingService {
             document.close();
         }
     }
-    
 
     private void addPdfHeader(Document doc, ReportType type, Map<String, Object> data) throws DocumentException {
         doc.add(new Paragraph("Reporte de " + getReportTitle(type), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18)));
@@ -179,8 +180,8 @@ public class ReportingServiceImpl implements ReportingService {
         // Agregar datos específicos según el tipo de reporte
         switch (reportType) {
             case RENTAL_SUMMARY:
-                rootNode.put("totalRentals", (Integer)data.get("totalRentals"));
-                rootNode.put("totalRevenue", (Double)data.get("totalRevenue"));
+                rootNode.put("totalRentals", data.get("totalRentals").toString());
+                rootNode.put("totalRevenue", data.get("totalRevenue").toString());
                 break;
             case MOST_RENTED_CARS:
                 ArrayNode vehiclesArray = rootNode.putArray("mostRentedVehicles");
@@ -197,7 +198,6 @@ public class ReportingServiceImpl implements ReportingService {
                         vehicleNode.put("rentalCount", entry.getValue());
                     });
                 break;
-            // Implementar otros tipos de reportes
         }
         
         return objectMapper.writeValueAsBytes(rootNode);
@@ -263,14 +263,13 @@ public class ReportingServiceImpl implements ReportingService {
         return outputStream.toByteArray();
     }
 
-
     private byte[] generateExcelReport(ReportType reportType, Map<String, Object> data) throws IOException {
         Workbook workbook = new XSSFWorkbook();
         Sheet summarySheet = workbook.createSheet("Resumen de Ingresos");
         Sheet detailsSheet = workbook.createSheet("Detalles de Alquileres");
 
         // Estilos para los encabezados
-        Font headerFont = workbook.createFont();
+        org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
         headerFont.setBold(true);
         CellStyle headerStyle = workbook.createCellStyle();
         headerStyle.setFont(headerFont);
@@ -279,17 +278,17 @@ public class ReportingServiceImpl implements ReportingService {
         LocalDate endDate = (LocalDate) data.get("endDate");
         Long totalRentals = (Long) data.get("totalRentals");
         Double totalRevenue = (Double) data.get("totalRevenue");
-        @SuppressWarnings("unchecked")
+        
         List<Rental> rentals = rentalRepository.findByEndDateBetween(
-                startDate.atStartOfDay(),
-                endDate.plusDays(1).atStartOfDay()
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
         );
 
         // --- Hoja de Resumen de Ingresos ---
         Row titleRow = summarySheet.createRow(0);
         Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("Resumen de Ingresos por Alquiler");
-        Font titleFont = workbook.createFont();
+        org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
         titleFont.setBold(true);
         titleFont.setFontHeightInPoints((short) 16);
         CellStyle titleStyle = workbook.createCellStyle();
@@ -334,7 +333,7 @@ public class ReportingServiceImpl implements ReportingService {
             // Acceder a la ID del cliente a través de la relación
             if (rental.getCustomer() != null) {
                 row.createCell(1).setCellValue(rental.getCustomer().getId());
-                row.createCell(2).setCellValue(rental.getCustomer().getName()); // Asumiendo que la entidad Customer tiene un campo 'name'
+                row.createCell(2).setCellValue(rental.getCustomer().getName());
             } else {
                 row.createCell(1).setCellValue("");
                 row.createCell(2).setCellValue("");
@@ -384,7 +383,118 @@ public class ReportingServiceImpl implements ReportingService {
     
     private String formatDate(LocalDate date) {
         return date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-    
-    
     }
+    
+    // Simplified date conversion methods
+    private LocalDateTime toDateTime(LocalDate date) {
+        return date != null ? date.atStartOfDay() : null;
+    }
+
+    @Override
+    public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
+        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
+        );
+        
+        return rentals.size();
+    }
+
+    @Override
+    public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
+        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                toDateTime(startDate), 
+                toDateTime(endDate.plusDays(1))
+        );
+        return rentals.stream()
+                .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
+                .sum();
+    }
+
+    @Override
+    public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
+        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
+        );
+        return rentals.stream()
+                .map(Rental::getVehicle)
+                .distinct()
+                .count();
+    }
+
+    @Override
+    public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
+        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
+        );
+        
+        return rentals.stream()
+                .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(entry -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("brand", entry.getKey().getBrand());
+                    result.put("model", entry.getKey().getModel());
+                    result.put("rentalCount", entry.getValue());
+                    
+                    return result;
+                })
+                .orElse(new HashMap<>()); // Return empty map if no rentals found
+    }
+
+    @Override
+    public long getNewCustomersCount(LocalDate startDate, LocalDate endDate) {
+        return customerRepository.countByCreatedAtBetween(
+                toDateTime(startDate),
+                toDateTime(endDate.plusDays(1))
+        );
+    }
+
+    @Override
+    public List<Map<String, Object>> getRentalTrends(TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null) {
+            endDate = LocalDate.now();
+            startDate = endDate.minus(period.getValue(), period.getUnit());
+        }
+
+        DateTimeFormatter formatter;
+        
+        switch (period) {
+            case MONTHLY:
+                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+                break;
+            case QUARTERLY:
+                formatter = DateTimeFormatter.ofPattern("yyyy-QQQ");
+                break;
+            case BIANNUAL:
+                formatter = DateTimeFormatter.ofPattern("yyyy-半年");
+                break;
+            case ANNUAL:
+                formatter = DateTimeFormatter.ofPattern("yyyy");
+                break;
+            default:
+                formatter = DateTimeFormatter.ISO_DATE;
+                break;
+        }
+
+        LocalDate current = startDate;
+        List<Map<String, Object>> trends = new ArrayList<>();
+
+        while (!current.isAfter(endDate)) {
+            LocalDate next = current.plus(period.getValue(), period.getUnit());
+            List<Rental> rentals = rentalRepository.findByEndDateBetween(
+                    toDateTime(current),
+                    toDateTime(next)
+            );
+            trends.add(Map.of("period", current.format(formatter), "rentalCount", rentals.size()));
+            current = next;
+        }
+
+        return trends;
+    }
+
+	
 }

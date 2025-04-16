@@ -44,26 +44,30 @@ public class SecurityConfig {
                                 ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/register"
                         ).permitAll()
 
-                        // Endpoints exclusivos para ADMIN (antes MANAGER)
+                        // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
+                        .requestMatchers(HttpMethod.OPTIONS, ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/reports").permitAll()
+
+                        // Endpoints exclusivos para ADMIN
                         .requestMatchers(ApiPathConstants.V1_ROUTE + "/users/**").hasRole("ADMIN")
                         .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/reports").hasRole("ADMIN")
 
-                        // Operaciones sobre customers y vehicles - USER puede modificar
+                        // Operaciones sobre customers y vehicles - USER puede modificar (GET, PUT)
                         .requestMatchers(
                                 HttpMethod.GET,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
                                 ApiPathConstants.V1_ROUTE + "/vehicles/**"
                         ).hasAnyRole("USERS", "ADMIN")
                         .requestMatchers(
-                                HttpMethod.POST,
-                                ApiPathConstants.V1_ROUTE + "/customers/**",
-                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasRole("ADMIN")
-                        .requestMatchers(
                                 HttpMethod.PUT,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
                                 ApiPathConstants.V1_ROUTE + "/vehicles/**"
                         ).hasAnyRole("USERS", "ADMIN")
+                        // Operaciones sobre customers y vehicles - ADMIN puede crear y eliminar
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                ApiPathConstants.V1_ROUTE + "/customers/**",
+                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
+                        ).hasRole("ADMIN")
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 ApiPathConstants.V1_ROUTE + "/customers/**",
