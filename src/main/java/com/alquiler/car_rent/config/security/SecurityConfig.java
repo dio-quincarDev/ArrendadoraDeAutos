@@ -45,11 +45,20 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
-                        .requestMatchers(HttpMethod.OPTIONS, ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/reports").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Permite todas las peticiones OPTIONS
 
                         // Endpoints exclusivos para ADMIN
                         .requestMatchers(ApiPathConstants.V1_ROUTE + "/users/**").hasRole("ADMIN")
                         .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/reports").hasRole("ADMIN")
+                        .requestMatchers(
+                        	    HttpMethod.GET, 
+                        	    ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/metrics/**"
+                        	).hasRole("ADMIN")
+                        	.requestMatchers(
+                        	    HttpMethod.GET,
+                        	    ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/export"
+                        	).hasRole("ADMIN")
+                        
 
                         // Operaciones sobre customers y vehicles - USER puede modificar (GET, PUT)
                         .requestMatchers(

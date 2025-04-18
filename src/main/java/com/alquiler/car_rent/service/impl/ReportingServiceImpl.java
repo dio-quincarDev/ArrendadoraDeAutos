@@ -20,6 +20,9 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +30,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,17 +61,26 @@ public class ReportingServiceImpl implements ReportingService {
             endDate = LocalDate.now();
             startDate = endDate.minus(period.getValue(), period.getUnit());
         }
-
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
-                toDateTime(startDate),
-                toDateTime(endDate.plusDays(1))
+        
+        // Ahora (usando search con paginación):
+        int page = 0;
+        int size = 500;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Rental> rentalsPage = rentalRepository.search(
+            startDate.atStartOfDay(), 
+            endDate.plusDays(1).atStartOfDay(), 
+            Pageable.unpaged() // O usar paginación: PageRequest.of(0, 1000)
         );
+        List<Rental> rentals = rentalsPage.getContent();
+
 
         Map<String, Object> reportData = new HashMap<>();
         reportData.put("startDate", startDate);
         reportData.put("endDate", endDate);
         reportData.put("period", period);
         reportData.put("totalRentals", (long) rentals.size());
+        reportData.put("totalPages", rentalsPage.getTotalPages());
+        reportData.put("currentPage", rentalsPage.getNumber());
 
         double totalRevenue = rentals.stream()
                 .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
@@ -235,9 +246,18 @@ public class ReportingServiceImpl implements ReportingService {
                 // Crear un dataset para gráfico de pastel para ingresos por período
                 DefaultPieDataset pieDataset = new DefaultPieDataset();
                 // Aquí se agregarían datos reales de ingresos por período
-                pieDataset.setValue("Enero", 25000);
-                pieDataset.setValue("Febrero", 30000);
-                pieDataset.setValue("Marzo", 28000);
+                LocalDate startDate = (LocalDate) data.get("startDate");
+                LocalDate endDate = (LocalDate) data.get("endDate");
+
+                Map<String, Double> monthlyRevenue = rentalRepository.findInDateRange(
+                        toDateTime(startDate),
+                        toDateTime(endDate.plusDays(1))
+                ).stream()
+                        .collect(Collectors.groupingBy(
+                                rental-> rental.getStartDate().format(DateTimeFormatter.ofPattern("yyy-MM")),
+                                Collectors.summingDouble(rental-> rental.getTotalPrice().doubleValue())
+                        ));
+                monthlyRevenue.forEach(pieDataset::setValue);
                 
                 chart = ChartFactory.createPieChart(
                     "Distribución de Ingresos",
@@ -251,7 +271,6 @@ public class ReportingServiceImpl implements ReportingService {
             default:
                 throw new IllegalArgumentException("Tipo de gráfico no implementado: " + reportType);
         }
-        
         // Renderizar como PNG
         if (svg) {
             // Implementar exportación a SVG (requiere biblioteca adicional)
@@ -279,7 +298,7 @@ public class ReportingServiceImpl implements ReportingService {
         Long totalRentals = (Long) data.get("totalRentals");
         Double totalRevenue = (Double) data.get("totalRevenue");
         
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+        List<Rental> rentals = rentalRepository.findInDateRange(
                 toDateTime(startDate),
                 toDateTime(endDate.plusDays(1))
         );
@@ -392,7 +411,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+        List<Rental> rentals = rentalRepository.findInDateRange(
                 toDateTime(startDate),
                 toDateTime(endDate.plusDays(1))
         );
@@ -402,7 +421,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+        List<Rental> rentals = rentalRepository.findInDateRange(
                 toDateTime(startDate), 
                 toDateTime(endDate.plusDays(1))
         );
@@ -413,7 +432,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+        List<Rental> rentals = rentalRepository.findInDateRange(
                 toDateTime(startDate),
                 toDateTime(endDate.plusDays(1))
         );
@@ -425,7 +444,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findByEndDateBetween(
+        List<Rental> rentals = rentalRepository.findInDateRange(
                 toDateTime(startDate),
                 toDateTime(endDate.plusDays(1))
         );
@@ -470,7 +489,7 @@ public class ReportingServiceImpl implements ReportingService {
                 formatter = DateTimeFormatter.ofPattern("yyyy-QQQ");
                 break;
             case BIANNUAL:
-                formatter = DateTimeFormatter.ofPattern("yyyy-半年");
+                formatter = DateTimeFormatter.ofPattern("yyyy-'H'");
                 break;
             case ANNUAL:
                 formatter = DateTimeFormatter.ofPattern("yyyy");
@@ -485,7 +504,7 @@ public class ReportingServiceImpl implements ReportingService {
 
         while (!current.isAfter(endDate)) {
             LocalDate next = current.plus(period.getValue(), period.getUnit());
-            List<Rental> rentals = rentalRepository.findByEndDateBetween(
+            List<Rental> rentals = rentalRepository.findInDateRange(
                     toDateTime(current),
                     toDateTime(next)
             );

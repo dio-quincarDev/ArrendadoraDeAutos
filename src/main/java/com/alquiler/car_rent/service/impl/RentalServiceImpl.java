@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.alquiler.car_rent.commons.dtos.RentalDto;
 import com.alquiler.car_rent.commons.entities.Rental;
@@ -12,6 +13,7 @@ import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.RentalStatus;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.RentalMapper;
+import com.alquiler.car_rent.exceptions.InvalidRentalException;
 import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
@@ -32,8 +34,9 @@ public class RentalServiceImpl implements RentalService{
 		this.customerRepository = customerRepository;
 		this.rentalMapper = rentalMapper;
 	}
-
+    
 	@Override
+	@Transactional(readOnly = true)
 	public List<RentalDto> findAllRentals() {
 		
 		return rentalRepository.findAll()
@@ -43,6 +46,7 @@ public class RentalServiceImpl implements RentalService{
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Optional<RentalDto> findRentalById(Long id) {
 		
 		return rentalRepository.findById(id).map(rentalMapper::rentalToDto);
@@ -50,6 +54,10 @@ public class RentalServiceImpl implements RentalService{
 
 	@Override
 	public RentalDto createRental(RentalDto rentalDto) {
+		if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
+			throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha final");
+		}
+		
 		
 		Rental rental = rentalMapper.dtoToRental(rentalDto);
 		
@@ -83,6 +91,9 @@ public class RentalServiceImpl implements RentalService{
 		
 		return rentalRepository.findById(id)
                 .map(existingRental -> {
+                	 if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
+                         throw new InvalidRentalException("Fechas inválidas");
+                     }
                     existingRental.setStartDate(rentalDto.getStartDate());
                     existingRental.setEndDate(rentalDto.getEndDate());
                     existingRental.setTotalPrice(rentalDto.getTotalPrice());
@@ -96,6 +107,10 @@ public class RentalServiceImpl implements RentalService{
 	public RentalDto cancelRental(Long id) {
 	    return rentalRepository.findById(id)
 	            .map(rental -> {
+	            	 Vehicle vehicle = rental.getVehicle();
+	                 vehicle.setStatus(VehicleStatus.AVAILABLE);
+	                 vehicleRepository.save(vehicle);
+	            	
 	                rental.setRentalStatus(RentalStatus.CANCELLED);
 	                rentalRepository.save(rental);
 	                return rentalMapper.rentalToDto(rentalRepository.save(rental));

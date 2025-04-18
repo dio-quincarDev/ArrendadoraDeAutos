@@ -88,6 +88,14 @@ public class ReportingController implements ReportingApi {
                                 .build()
                 );
                 break;
+            case EXCEL:
+                headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                headers.setContentDisposition(
+                        ContentDisposition.attachment()
+                                .filename(filename + ".xlsx")
+                                .build()
+                );
+                break;
             // Add other formats as needed
         }
 
