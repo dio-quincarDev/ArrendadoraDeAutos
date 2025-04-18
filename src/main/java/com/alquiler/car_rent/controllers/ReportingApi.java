@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH)
+@RequestMapping( ApiPathConstants.REPORTS_BASE_PATH)
 public interface ReportingApi {
 
     @GetMapping(produces = "text/html")

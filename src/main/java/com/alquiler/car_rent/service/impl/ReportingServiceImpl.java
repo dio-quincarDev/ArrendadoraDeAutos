@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jfree.chart.ChartFactory;
@@ -24,9 +26,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.DOMImplementation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -57,9 +61,12 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public Map<String, Object> generateReportData(TimePeriod period, LocalDate startDate, LocalDate endDate) {
-        if (startDate == null) {
-            endDate = LocalDate.now();
-            startDate = endDate.minus(period.getValue(), period.getUnit());
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+
+        if (start == null) {
+            end= LocalDate.now();
+            start = endDate.minus(period.getValue(), period.getUnit());
         }
         
         // Ahora (usando search con paginación):
@@ -67,16 +74,16 @@ public class ReportingServiceImpl implements ReportingService {
         int size = 500;
         Pageable pageable = PageRequest.of(page, size);
         Page<Rental> rentalsPage = rentalRepository.search(
-            startDate.atStartOfDay(), 
-            endDate.plusDays(1).atStartOfDay(), 
+          toDateTime(start),
+            toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null),
             Pageable.unpaged() // O usar paginación: PageRequest.of(0, 1000)
         );
         List<Rental> rentals = rentalsPage.getContent();
 
 
         Map<String, Object> reportData = new HashMap<>();
-        reportData.put("startDate", startDate);
-        reportData.put("endDate", endDate);
+        reportData.put("startDate", start);
+        reportData.put("endDate", end);
         reportData.put("period", period);
         reportData.put("totalRentals", (long) rentals.size());
         reportData.put("totalPages", rentalsPage.getTotalPages());
@@ -112,9 +119,18 @@ public class ReportingServiceImpl implements ReportingService {
                 case EXCEL: return generateExcelReport(reportType, reportData);
                 default: throw new IllegalArgumentException("Formato no soportado: " + format);
             }
+        } catch (DocumentException e) {
+            logger.error("Error al generar reporte PDF: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al generar reporte PDF", e);
+        } catch (IOException e) {
+            logger.error("Error de I/O al generar reporte (puede ser PDF, JSON, Excel o Chart): {}", e.getMessage(), e);
+            throw new RuntimeException("Error de I/O al generar reporte", e);
+        } catch (IllegalArgumentException e) {
+            logger.error("Formato de reporte no soportado: {}", e.getMessage());
+            throw e; // Re-lanzamos la excepción para que el controlador pueda manejarla
         } catch (Exception e) {
-            logger.error("Error generando reporte: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al generar reporte", e);
+            logger.error("Error inesperado al generar reporte: {}", e.getMessage(), e);
+            throw new RuntimeException("Error inesperado al generar reporte", e);
         }
     }
 
@@ -272,14 +288,25 @@ public class ReportingServiceImpl implements ReportingService {
                 throw new IllegalArgumentException("Tipo de gráfico no implementado: " + reportType);
         }
         // Renderizar como PNG
-        if (svg) {
-            // Implementar exportación a SVG (requiere biblioteca adicional)
-            throw new UnsupportedOperationException("Exportación a SVG no implementada");
-        } else {
-            ChartUtils.writeChartAsPNG(outputStream, chart, 800, 600);
+        if (chart != null) {
+            if (svg) {
+                DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+                String svgNS = "http://www.w3.org/2000/svg";
+                Document document = (Document) domImpl.createDocument(svgNS, "svg", null);
+                SVGGraphics2D svgGraphics2D = new SVGGraphics2D((org.w3c.dom.Document) document);
+                chart.draw(svgGraphics2D, new java.awt.Rectangle(800, 600));
+                try (OutputStreamWriter writer = new OutputStreamWriter(outputStream, "UTF-8")) {
+                    svgGraphics2D.stream(writer, true);
+                } finally {
+                    svgGraphics2D.dispose();
+                }
+            } else {
+                ChartUtils.writeChartAsPNG(outputStream, chart, 800, 600);
+            }
+            return outputStream.toByteArray();
         }
-        
-        return outputStream.toByteArray();
+
+        return new byte[0]; // Devolver un array vacío si no se generó el gráfico
     }
 
     private byte[] generateExcelReport(ReportType reportType, Map<String, Object> data) throws IOException {
@@ -411,32 +438,55 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findInDateRange(
-                toDateTime(startDate),
-                toDateTime(endDate.plusDays(1))
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if(start==null){
+            end = LocalDate.now();
+            start = end.minus(TimePeriod.MONTHLY.getValue(), TimePeriod.MONTHLY.getUnit());
+        }
+
+        Page<Rental> rentalsPage = rentalRepository.search(
+                toDateTime(start),
+                toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null),
+                Pageable.unpaged()
         );
         
-        return rentals.size();
+        return rentalsPage.getTotalElements();
     }
 
     @Override
     public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findInDateRange(
-                toDateTime(startDate), 
-                toDateTime(endDate.plusDays(1))
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if(start==null){
+            end = LocalDate.now();
+            start = end.minus(TimePeriod.MONTHLY.getValue(), TimePeriod.MONTHLY.getUnit());
+        }
+        Page<Rental> rentalsPage = rentalRepository.search(
+                toDateTime(start),
+                toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null),
+                Pageable.unpaged()
         );
-        return rentals.stream()
-                .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
+        return rentalsPage.getContent().stream()
+                .mapToDouble(rental-> rental.getTotalPrice().doubleValue())
                 .sum();
     }
 
     @Override
     public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findInDateRange(
-                toDateTime(startDate),
-                toDateTime(endDate.plusDays(1))
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if(start==null){
+            end = LocalDate.now();
+            start = end.minus(TimePeriod.MONTHLY.getValue(), TimePeriod.MONTHLY.getUnit());
+        }
+
+        Page<Rental> rentalsPage = rentalRepository.search(
+                toDateTime(start),
+                toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null),
+                Pageable.unpaged()
         );
-        return rentals.stream()
+        return rentalsPage.getContent().stream()
                 .map(Rental::getVehicle)
                 .distinct()
                 .count();
@@ -444,39 +494,55 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
-        List<Rental> rentals = rentalRepository.findInDateRange(
-                toDateTime(startDate),
-                toDateTime(endDate.plusDays(1))
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if(start==null){
+            end = LocalDate.now();
+            start = end.minus(TimePeriod.MONTHLY.getValue(), TimePeriod.MONTHLY.getUnit());
+        }
+
+        Page<Rental> rentalsPage = rentalRepository.search(
+                toDateTime(start),
+                toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null),
+                Pageable.unpaged()
         );
         
-        return rentals.stream()
-                .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()))
-                .entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(entry -> {
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("brand", entry.getKey().getBrand());
-                    result.put("model", entry.getKey().getModel());
-                    result.put("rentalCount", entry.getValue());
-                    
-                    return result;
-                })
-                .orElse(new HashMap<>()); // Return empty map if no rentals found
+        return rentalsPage.getContent().stream()
+        .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()))
+        .entrySet().stream()
+        .max(Map.Entry.comparingByValue())
+        .map(entry -> {
+            Map<String, Object> result = new HashMap<>(); // Explicitly define the types
+            result.put("brand", entry.getKey().getBrand());
+            result.put("model", entry.getKey().getModel());
+            result.put("rentalCount", entry.getValue());
+            return result;
+        })
+        .orElse(new HashMap<>());
     }
 
     @Override
     public long getNewCustomersCount(LocalDate startDate, LocalDate endDate) {
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if (start == null) {
+            end = LocalDate.now();
+            start = end.minus(TimePeriod.MONTHLY.getValue(), TimePeriod.MONTHLY.getUnit());
+        }
+        // Cambio: Asegurando que los valores null se manejen en la consulta o aquí
         return customerRepository.countByCreatedAtBetween(
-                toDateTime(startDate),
-                toDateTime(endDate.plusDays(1))
+                toDateTime(start),
+                toDateTime(end != null ? LocalDate.from(end.plusDays(1).atStartOfDay()) : null)
         );
     }
 
     @Override
     public List<Map<String, Object>> getRentalTrends(TimePeriod period, LocalDate startDate, LocalDate endDate) {
-        if (startDate == null) {
-            endDate = LocalDate.now();
-            startDate = endDate.minus(period.getValue(), period.getUnit());
+        LocalDate start = startDate;
+        LocalDate end = endDate;
+        if (start == null) {
+            end = LocalDate.now();
+            start = end.minus(period.getValue(), period.getUnit());
         }
 
         DateTimeFormatter formatter;
@@ -499,16 +565,17 @@ public class ReportingServiceImpl implements ReportingService {
                 break;
         }
 
-        LocalDate current = startDate;
+        LocalDate current = start;
         List<Map<String, Object>> trends = new ArrayList<>();
 
-        while (!current.isAfter(endDate)) {
+        while (!current.isAfter(end)) {
             LocalDate next = current.plus(period.getValue(), period.getUnit());
-            List<Rental> rentals = rentalRepository.findInDateRange(
+            Page<Rental> rentalsPage = rentalRepository.search(
                     toDateTime(current),
-                    toDateTime(next)
+                    toDateTime(next),
+                    Pageable.unpaged()
             );
-            trends.add(Map.of("period", current.format(formatter), "rentalCount", rentals.size()));
+            trends.add(Map.of("period", current.format(formatter), "rentalCount", rentalsPage.getTotalElements()));
             current = next;
         }
 

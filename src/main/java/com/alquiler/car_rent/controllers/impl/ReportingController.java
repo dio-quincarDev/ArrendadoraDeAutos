@@ -88,6 +88,15 @@ public class ReportingController implements ReportingApi {
                                 .build()
                 );
                 break;
+            case CHART_SVG:
+                headers.setContentType(MediaType.parseMediaType("image/svg+xml"));
+                headers.setContentDisposition(
+                        ContentDisposition.inline()
+                                .filename(filename + ".svg")
+                                .build()
+                );
+                break;
+
             case EXCEL:
                 headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
                 headers.setContentDisposition(
