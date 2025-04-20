@@ -131,4 +131,15 @@ public interface ReportingService {
         CUSTOMER_ACTIVITY,
         MOST_RENTED_CARS
     }
+
+    /**
+     * Genera un archivo Excel genérico a partir de una tabla de datos enviada desde frontend.
+     *
+     * @param headers Encabezados de las columnas
+     * @param data Filas de datos (cada fila es una lista de strings)
+     * @return Excel en bytes listo para descargar
+     */
+    byte[] generateGenericTableExcel(List<String> headers, List<List<String>> data);
+
+
 }

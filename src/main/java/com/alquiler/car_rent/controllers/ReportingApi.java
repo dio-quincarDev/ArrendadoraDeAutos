@@ -1,6 +1,7 @@
 package com.alquiler.car_rent.controllers;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
+import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
 import com.alquiler.car_rent.service.ReportingService.OutputFormat;
 import com.alquiler.car_rent.service.ReportingService.ReportType;
 import com.alquiler.car_rent.service.ReportingService.TimePeriod;
@@ -8,9 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -81,5 +80,11 @@ public interface ReportingApi {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     );
 
-   
+    @PostMapping("/export-metrics")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<byte[]> exportMetrics(@RequestBody ExportMetricsRequest request);
+
+
+
+
 }

@@ -1,5 +1,6 @@
 package com.alquiler.car_rent.controllers.impl;
 
+import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
 import com.alquiler.car_rent.controllers.ReportingApi;
 import com.alquiler.car_rent.service.ReportingService;
 import com.alquiler.car_rent.service.ReportingService.OutputFormat;
@@ -183,5 +184,26 @@ public class ReportingController implements ReportingApi {
         return ResponseEntity.ok(rentalTrends);
     }
 
-   
+    @Override
+    public ResponseEntity<byte[]> exportMetrics(ExportMetricsRequest request) {
+        byte[] fileBytes;
+
+        if ("EXCEL".equalsIgnoreCase(request.getFormat())) {
+            fileBytes = reportingService.generateGenericTableExcel(
+                    request.getHeaders(), request.getData()
+            );
+        } else {
+            throw new UnsupportedOperationException("Formato no soportado: " + request.getFormat());
+        }
+
+        String fileName = "metricas_" + LocalDate.now() + ".xlsx";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(fileBytes);
+    }
+
+
+
 }
