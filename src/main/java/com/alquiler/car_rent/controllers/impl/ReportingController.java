@@ -1,11 +1,10 @@
 package com.alquiler.car_rent.controllers.impl;
 
+import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
 import com.alquiler.car_rent.controllers.ReportingApi;
 import com.alquiler.car_rent.service.reportService.ReportingService;
-import com.alquiler.car_rent.service.reportService.ReportingService.OutputFormat;
-import com.alquiler.car_rent.service.reportService.ReportingService.ReportType;
-import com.alquiler.car_rent.service.reportService.ReportingService.TimePeriod;
+
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,14 +22,16 @@ import java.util.Map;
 public class ReportingController implements ReportingApi {
 
     private final ReportingService reportingService;
+    private final ReportingConstants reportingConstants;
 
-    public ReportingController(ReportingService reportingService) {
+    public ReportingController(ReportingService reportingService, ReportingConstants reportingConstants) {
         this.reportingService = reportingService;
+        this.reportingConstants = reportingConstants;
     }
 
     @Override
     public String viewReport(
-            TimePeriod period,
+            ReportingConstants.TimePeriod period,
             LocalDate startDate,
             LocalDate endDate,
             Model model
@@ -38,15 +39,15 @@ public class ReportingController implements ReportingApi {
         model.addAttribute("reportData",
                 reportingService.generateReportData(period, startDate, endDate)
         );
-        model.addAttribute("periods", TimePeriod.values());
+        model.addAttribute("periods", ReportingConstants.TimePeriod.values());
         return "report";
     }
 
     @Override
     public ResponseEntity<byte[]> exportReport(
-            OutputFormat format,
-            ReportType reportType,
-            TimePeriod period,
+            ReportingConstants.OutputFormat format,
+            ReportingConstants.ReportType reportType,
+            ReportingConstants.TimePeriod period,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -60,14 +61,14 @@ public class ReportingController implements ReportingApi {
     }
 
     private HttpHeaders createHeaders(
-            OutputFormat format,
-            ReportType reportType,
-            TimePeriod period,
+            ReportingConstants.OutputFormat format,
+            ReportingConstants.ReportType reportType,
+            ReportingConstants.TimePeriod period,
             LocalDate startDate,
             LocalDate endDate
     ) {
         HttpHeaders headers = new HttpHeaders();
-        String filename = generateFilename(reportType, period, startDate, endDate);
+        String filename = generateFilename(format, reportType, period, startDate, endDate);
 
         switch (format) {
             case PDF:
@@ -113,8 +114,8 @@ public class ReportingController implements ReportingApi {
     }
 
     private String generateFilename(
-            ReportType reportType,
-            TimePeriod period,
+            ReportingConstants.ReportType reportType,
+            ReportingConstants.TimePeriod period,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -127,6 +128,16 @@ public class ReportingController implements ReportingApi {
                 period.name().toLowerCase(),
                 dateRange
         );
+    }
+
+    @Override
+    public String viewReport(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate, Model model) {
+        return "";
+    }
+
+    @Override
+    public ResponseEntity<byte[]> exportReport(ReportingConstants.OutputFormat format, ReportingConstants.ReportType reportType, ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        return null;
     }
 
     @Override
@@ -176,7 +187,7 @@ public class ReportingController implements ReportingApi {
 
     @Override
     public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
-            @RequestParam(value = "period", required = false) TimePeriod period,
+            @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
             @RequestParam(value = "startDate", required = false) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) LocalDate endDate
     ) {

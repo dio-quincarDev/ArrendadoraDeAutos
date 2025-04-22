@@ -57,7 +57,7 @@ public class ReportingServiceImpl implements ReportingService {
                 case EXCEL:
                     return excelReportService.generateReport(reportData, reportType);
                 case JSON:
-                    return jsonReportService.generateReport(reportData, reportType);
+                    return jsonReportService.generateReport(reportData, reportType, format);
                 case CHART_PNG:
                     return chartReportService.generateChartAsPng(reportData, reportType);
                 case CHART_SVG:

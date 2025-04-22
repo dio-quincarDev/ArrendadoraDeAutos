@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE jasperReport PUBLIC "-//JasperReports//DTD Report Design//EN"
+        "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              name="pdf_rental_report"
+              pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              uuid="rental-report-template">
+
+    <!-- Fields from RentalDto -->
+    <field name="customerName" class="java.lang.String"/>
+    <field name="vehicleBrand" class="java.lang.String"/>
+    <field name="vehicleModel" class="java.lang.String"/>
+    <field name="startDate" class="java.time.LocalDateTime"/>
+    <field name="endDate" class="java.time.LocalDateTime"/>
+    <field name="totalPrice" class="java.math.BigDecimal"/>
+
+    <!-- Parameters for header info -->
+    <parameter name="startDateFormatted" class="java.lang.String"/>
+    <parameter name="endDateFormatted" class="java.lang.String"/>
+    <parameter name="totalRevenue" class="java.lang.String"/>
+    <parameter name="totalRentals" class="java.lang.String"/>
+
+    <title>
+        <band height="60">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="20"/>
+                <textElement textAlignment="Center"><font size="16" isBold="true"/></textElement>
+                <text><![CDATA[Reporte de Alquileres]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="0" y="25" width="555" height="15"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle" />
+                <textFieldExpression><![CDATA["Desde " + $P{startDateFormatted} + " hasta " + $P{endDateFormatted}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="0" y="40" width="555" height="15"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle" />
+                <textFieldExpression><![CDATA["Total Alquileres: " + $P{totalRentals} + " | Ingresos: $" + $P{totalRevenue}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="20">
+            <staticText><reportElement x="0" y="0" width="120" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Cliente]]></text></staticText>
+            <staticText><reportElement x="120" y="0" width="130" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Vehículo]]></text></staticText>
+            <staticText><reportElement x="250" y="0" width="95" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Inicio]]></text></staticText>
+            <staticText><reportElement x="345" y="0" width="95" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Fin]]></text></staticText>
+            <staticText><reportElement x="440" y="0" width="115" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Precio Total]]></text></staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="20">
+            <textField><reportElement x="0" y="0" width="120" height="20"/><textFieldExpression><![CDATA[$F{customerName}]]></textFieldExpression></textField>
+            <textField><reportElement x="120" y="0" width="130" height="20"/><textFieldExpression><![CDATA[$F{vehicleBrand} + " " + $F{vehicleModel}]]></textFieldExpression></textField>
+
+            <!-- Fecha Inicio -->
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="250" y="0" width="95" height="20"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd/MM/yyyy").format($F{startDate})]]></textFieldExpression>
+            </textField>
+
+            <!-- Fecha Fin -->
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="345" y="0" width="95" height="20"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd/MM/yyyy").format($F{endDate})]]></textFieldExpression>
+            </textField>
+
+            <!-- Precio -->
+            <textField>
+                <reportElement x="440" y="0" width="115" height="20"/>
+                <textFieldExpression><![CDATA["$" + $F{totalPrice}.setScale(2).toString()]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+</jasperReport>
