@@ -2,10 +2,10 @@ package com.alquiler.car_rent.controllers.impl;
 
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
 import com.alquiler.car_rent.controllers.ReportingApi;
-import com.alquiler.car_rent.service.ReportingService;
-import com.alquiler.car_rent.service.ReportingService.OutputFormat;
-import com.alquiler.car_rent.service.ReportingService.ReportType;
-import com.alquiler.car_rent.service.ReportingService.TimePeriod;
+import com.alquiler.car_rent.service.reportService.ReportingService;
+import com.alquiler.car_rent.service.reportService.ReportingService.OutputFormat;
+import com.alquiler.car_rent.service.reportService.ReportingService.ReportType;
+import com.alquiler.car_rent.service.reportService.ReportingService.TimePeriod;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

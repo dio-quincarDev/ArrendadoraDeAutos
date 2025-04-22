@@ -2,9 +2,9 @@ package com.alquiler.car_rent.controllers;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
-import com.alquiler.car_rent.service.ReportingService.OutputFormat;
-import com.alquiler.car_rent.service.ReportingService.ReportType;
-import com.alquiler.car_rent.service.ReportingService.TimePeriod;
+import com.alquiler.car_rent.service.reportService.ReportingService.OutputFormat;
+import com.alquiler.car_rent.service.reportService.ReportingService.ReportType;
+import com.alquiler.car_rent.service.reportService.ReportingService.TimePeriod;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
