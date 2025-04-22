@@ -181,6 +181,20 @@ public class ChartReportServiceImpl implements ChartReportService {
                     }
                     return null;
 
+                case RENTAL_SUMMARY:
+                    DefaultCategoryDataset rentalSummaryDataset = new DefaultCategoryDataset();
+                    Long totalRentals = (Long) data.get("totalRentals");
+                    String periodLabel = "Período del Resumen"; // Podemos hacer esto más dinámico si el período está en los datos
+                    if (totalRentals != null) {
+                        rentalSummaryDataset.addValue(totalRentals, "Total Alquileres", periodLabel);
+                        JFreeChart chart = ChartFactory.createBarChart(
+                                "Resumen de Alquileres", "Período", "Total de Alquileres", rentalSummaryDataset);
+                        CategoryPlot plot = chart.getCategoryPlot();
+                        ((BarRenderer) plot.getRenderer()).setDefaultItemLabelsVisible(true);
+                        return chart;
+                    }
+                    return null;
+
                 case REVENUE_ANALYSIS:
                     DefaultCategoryDataset stackedAreaDataset = new DefaultCategoryDataset();
                     Map<String, Map<String, Double>> revenueComposition = (Map<String, Map<String, Double>>) data.get("revenueComposition");

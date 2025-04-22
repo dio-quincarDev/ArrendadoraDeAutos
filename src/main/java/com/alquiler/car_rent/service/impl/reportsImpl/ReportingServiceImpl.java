@@ -2,6 +2,7 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
+import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +54,9 @@ public class ReportingServiceImpl implements ReportingService {
 
             switch (format) {
                 case PDF:
-                    return pdfReportService.generateReport(reportData, reportType);
+                    return pdfReportService.generateReport(reportData, reportType, format);
                 case EXCEL:
-                    return excelReportService.generateReport(reportData, reportType);
+                    return excelReportService.generateReport(reportData, reportType, format);
                 case JSON:
                     return jsonReportService.generateReport(reportData, reportType, format);
                 case CHART_PNG:
@@ -99,6 +100,11 @@ public class ReportingServiceImpl implements ReportingService {
     @Override
     public List<Map<String, Object>> getRentalTrends(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
         return metricsService.getRentalTrends(period, startDate, endDate);
+    }
+
+    @Override
+    public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
+        return metricsService.getVehicleUsage(startDate, endDate);
     }
 
     @Override

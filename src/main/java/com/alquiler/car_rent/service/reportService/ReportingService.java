@@ -1,6 +1,7 @@
 package com.alquiler.car_rent.service.reportService;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
+import com.alquiler.car_rent.commons.entities.Vehicle;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -86,6 +87,8 @@ public interface ReportingService {
      * @return Una lista de mapas con el período y la cantidad de alquileres.
      */
     List<Map<String, Object>> getRentalTrends(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate);
+
+    Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate);
 
     /**
      * Genera un archivo Excel genérico a partir de una tabla de datos enviada desde frontend.

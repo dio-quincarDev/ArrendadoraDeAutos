@@ -1,14 +1,12 @@
 package com.alquiler.car_rent.controllers;
 
 import com.alquiler.car_rent.commons.constants.ApiPathConstants;
+import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
-import com.alquiler.car_rent.service.reportService.ReportingService.OutputFormat;
-import com.alquiler.car_rent.service.reportService.ReportingService.ReportType;
-import com.alquiler.car_rent.service.reportService.ReportingService.TimePeriod;
+import com.alquiler.car_rent.commons.entities.Vehicle;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -18,21 +16,20 @@ import java.util.Map;
 @RequestMapping( ApiPathConstants.REPORTS_BASE_PATH)
 public interface ReportingApi {
 
-    @GetMapping(produces = "text/html")
+    @GetMapping(produces = "application/json") // Modified to produce JSON
     @PreAuthorize("hasRole('ADMIN')")
-    String viewReport(
-            @RequestParam(defaultValue = "MONTHLY") TimePeriod period,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Model model
+    ResponseEntity<Map<String, Object>> getDashboardData( // Renamed for clarity
+                                                          @RequestParam(defaultValue = "MONTHLY") ReportingConstants.TimePeriod period,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     );
 
     @GetMapping("/export")
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<byte[]> exportReport(
-            @RequestParam(defaultValue = "PDF") OutputFormat format,
-            @RequestParam(defaultValue = "RENTAL_SUMMARY") ReportType reportType,
-            @RequestParam(defaultValue = "MONTHLY") TimePeriod period,
+            @RequestParam(defaultValue = "PDF") ReportingConstants.OutputFormat format,
+            @RequestParam(defaultValue = "RENTAL_SUMMARY") ReportingConstants.ReportType reportType,
+            @RequestParam(defaultValue = "MONTHLY") ReportingConstants.TimePeriod period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     );
@@ -75,7 +72,15 @@ public interface ReportingApi {
     @GetMapping("/metrics/rental-trends")
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
-            @RequestParam(value = "period", required = false) TimePeriod period,
+            @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    );
+
+    // Ejemplo de endpoint adicional para el dashboard
+    @GetMapping("/metrics/vehicle-usage")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     );
@@ -83,8 +88,4 @@ public interface ReportingApi {
     @PostMapping("/export-metrics")
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<byte[]> exportMetrics(@RequestBody ExportMetricsRequest request);
-
-
-
-
 }

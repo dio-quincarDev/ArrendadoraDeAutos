@@ -1,7 +1,6 @@
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
-
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.PdfReportService;
 import com.itextpdf.text.*;
@@ -59,7 +58,15 @@ public class PdfReportServiceImpl implements PdfReportService {
                 case ReportingConstants.ReportType.VEHICLE_USAGE:
                     addVehicleUsageList(doc, data);
                     break;
-                // Puedes añadir casos para otros tipos de reportes aquí
+                case ReportingConstants.ReportType.RENTAL_SUMMARY:
+                    addRentalSummary(doc, data);
+                    break;
+                case ReportingConstants.ReportType.REVENUE_ANALYSIS:
+                    addRevenueAnalysis(doc, data);
+                    break;
+                case ReportingConstants.ReportType.CUSTOMER_ACTIVITY:
+                    addCustomerActivity(doc, data);
+                    break;
                 default:
                     Paragraph notSupported = new Paragraph("Contenido no soportado para este tipo de reporte.", normalFont);
                     doc.add(notSupported);
@@ -68,6 +75,82 @@ public class PdfReportServiceImpl implements PdfReportService {
         } catch (DocumentException e) {
             logger.error("Error al añadir el contenido del PDF: {}", e.getMessage(), e);
         }
+    }
+
+    private void addRentalSummary(Document doc, Map<String, Object> data) throws DocumentException {
+        Paragraph title = new Paragraph("Resumen de Alquileres", headerFont);
+        doc.add(title);
+        doc.add(new Paragraph("Total de Alquileres: " + data.get("totalRentals"), normalFont));
+        doc.add(new Paragraph("Clientes Únicos que Alquilaron: " + data.get("uniqueCustomers"), normalFont));
+        doc.add(new Paragraph("Duración Promedio de Alquiler: " + String.format("%.2f", data.get("averageRentalDuration")) + " días", normalFont));
+        Map<String, Object> mostRented = (Map<String, Object>) data.get("mostRentedVehicle");
+        if (mostRented != null) {
+            doc.add(new Paragraph("Vehículo Más Alquilado: " + mostRented.get("brand") + " " + mostRented.get("model") + " (" + mostRented.get("rentalCount") + " veces)", normalFont));
+        }
+        doc.add(new Paragraph("Ingresos Totales por Alquileres: $" + String.format("%.2f", data.get("totalRevenue")), normalFont));
+        doc.add(new Paragraph(" "));
+    }
+
+    private void addRevenueAnalysis(Document doc, Map<String, Object> data) throws DocumentException {
+        Paragraph title = new Paragraph("Análisis de Ingresos", headerFont);
+        doc.add(title);
+        doc.add(new Paragraph("Ingresos Totales por Alquileres: $" + String.format("%.2f", data.get("totalRevenue")), normalFont));
+        doc.add(new Paragraph("Ingresos Promedio por Alquiler: $" + String.format("%.2f", (Double) data.get("totalRevenue") / (Long) data.get("totalRentals")), normalFont));
+        List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) data.get("rentalTrends");
+        if (rentalTrends != null && !rentalTrends.isEmpty()) {
+            Paragraph trendsTitle = new Paragraph("Tendencias de Ingresos (Estimado):", headerFont);
+            doc.add(trendsTitle);
+            PdfPTable table = new PdfPTable(2);
+            table.setWidthPercentage(100);
+            addTableHeader(table, "Período");
+            addTableHeader(table, "Ingresos Estimados");
+            double averageRate = (Double) data.getOrDefault("averageRentalRate", 50.0); // Tarifa promedio por día (ejemplo)
+            rentalTrends.forEach(trend -> {
+                table.addCell(new Phrase(String.valueOf(trend.get("period")), normalFont));
+                table.addCell(new Phrase("$" + String.format("%.2f", (Long) trend.get("rentalCount") * averageRate), normalFont));
+            });
+            doc.add(table);
+        }
+        doc.add(new Paragraph(" "));
+    }
+
+    private void addCustomerActivity(Document doc, Map<String, Object> data) throws DocumentException {
+        Paragraph title = new Paragraph("Actividad de Clientes", headerFont);
+        doc.add(title);
+        doc.add(new Paragraph("Total de Clientes Activos: " + data.get("activeCustomers"), normalFont));
+        doc.add(new Paragraph("Nuevos Clientes: " + data.get("newCustomers"), normalFont));
+
+        List<Map<String, Object>> topCustomers = (List<Map<String, Object>>) data.get("topCustomersByRentals");
+        if (topCustomers != null && !topCustomers.isEmpty()) {
+            Paragraph topCustomersTitle = new Paragraph("Clientes con Mayor Actividad:", headerFont);
+            doc.add(topCustomersTitle);
+            PdfPTable table = new PdfPTable(3);
+            table.setWidthPercentage(100);
+            addTableHeader(table, "ID Cliente");
+            addTableHeader(table, "Nombre Cliente");
+            addTableHeader(table, "Cantidad de Alquileres");
+            topCustomers.forEach(customer -> {
+                table.addCell(new Phrase(String.valueOf(customer.get("customerId")), normalFont));
+                table.addCell(new Phrase(String.valueOf(customer.get("name")), normalFont));
+                table.addCell(new Phrase(String.valueOf(customer.get("rentalCount")), normalFont));
+            });
+            doc.add(table);
+
+            Map<String, Double> avgDurationByCustomer = (Map<String, Double>) data.get("averageRentalDurationByTopCustomers");
+            if (avgDurationByCustomer != null && !avgDurationByCustomer.isEmpty()) {
+                Paragraph avgDurationTitle = new Paragraph("Duración Promedio de Alquiler por Cliente (Top " + topCustomers.size() + "):", headerFont);
+                doc.add(avgDurationTitle);
+                com.itextpdf.text.List list = new com.itextpdf.text.List(false); // Lista no ordenada
+                avgDurationByCustomer.forEach((name, duration) -> {
+                    list.add(new ListItem(name + ": " + String.format("%.2f", duration) + " días", normalFont));
+                });
+                doc.add(list);
+            }
+        } else {
+            Paragraph noData = new Paragraph("No hay datos de actividad de clientes disponibles.", normalFont);
+            doc.add(noData);
+        }
+        doc.add(new Paragraph(" "));
     }
 
     private void addMostRentedVehiclesTable(Document doc, Map<String, Object> data) throws DocumentException {

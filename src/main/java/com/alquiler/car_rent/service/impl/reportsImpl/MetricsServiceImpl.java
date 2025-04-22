@@ -1,6 +1,7 @@
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
+import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.repositories.CustomerRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -158,6 +160,81 @@ public class MetricsServiceImpl implements MetricsService {
         }
 
         return trends;
+    }
+
+    @Override
+    public long getUniqueCustomersRented(LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentals.stream()
+                .map(Rental::getCustomer)
+                .distinct()
+                .count();
+    }
+
+    @Override
+    public double getAverageRentalDuration(LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        if (rentals.isEmpty()) {
+            return 0;
+        }
+        long totalDuration = rentals.stream()
+                .mapToLong(rental -> ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate()))
+                .sum();
+        return (double) totalDuration / rentals.size();
+    }
+
+    @Override
+    public long getActiveCustomersCount(LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentals.stream()
+                .map(Rental::getCustomer)
+                .distinct()
+                .count();
+    }
+
+    @Override
+    public List<Map<String, Object>> getTopCustomersByRentals(LocalDate startDate, LocalDate endDate, int limit) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentals.stream()
+                .collect(Collectors.groupingBy(Rental::getCustomer, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<Customer, Long>comparingByValue().reversed())
+                .limit(limit)
+                .map(entry -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("customerId", entry.getKey().getId());
+                    result.put("name", entry.getKey().getName()); // Usando customer.getName()
+                    result.put("rentalCount", entry.getValue());
+                    return result;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Double> getAverageRentalDurationByCustomer(LocalDate startDate, LocalDate endDate, List<Long> customerIds) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentals.stream()
+                .filter(rental -> customerIds.contains(rental.getCustomer().getId()))
+                .collect(Collectors.groupingBy(Rental::getCustomer,
+                        Collectors.averagingLong(rental -> ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate()))))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey().getName(), // Usando customer.getName()
+                        Map.Entry::getValue
+                ));
+    }
+
+    @Override
+    public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentals.stream()
+                .collect(Collectors.groupingBy(rental -> rental.getVehicle(), Collectors.counting()));
     }
 
 }

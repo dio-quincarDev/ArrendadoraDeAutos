@@ -2,6 +2,7 @@ package com.alquiler.car_rent.controllers.impl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
+import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.controllers.ReportingApi;
 import com.alquiler.car_rent.service.reportService.ReportingService;
 
@@ -9,8 +10,6 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
@@ -22,25 +21,19 @@ import java.util.Map;
 public class ReportingController implements ReportingApi {
 
     private final ReportingService reportingService;
-    private final ReportingConstants reportingConstants;
 
-    public ReportingController(ReportingService reportingService, ReportingConstants reportingConstants) {
+    public ReportingController(ReportingService reportingService){
         this.reportingService = reportingService;
-        this.reportingConstants = reportingConstants;
     }
 
     @Override
-    public String viewReport(
+    public ResponseEntity<Map<String, Object>> getDashboardData(
             ReportingConstants.TimePeriod period,
             LocalDate startDate,
-            LocalDate endDate,
-            Model model
+            LocalDate endDate
     ) {
-        model.addAttribute("reportData",
-                reportingService.generateReportData(period, startDate, endDate)
-        );
-        model.addAttribute("periods", ReportingConstants.TimePeriod.values());
-        return "report";
+        Map<String, Object> dashboardData = reportingService.generateReportData(period, startDate, endDate);
+        return ResponseEntity.ok(dashboardData);
     }
 
     @Override
@@ -68,7 +61,7 @@ public class ReportingController implements ReportingApi {
             LocalDate endDate
     ) {
         HttpHeaders headers = new HttpHeaders();
-        String filename = generateFilename(format, reportType, period, startDate, endDate);
+        String filename = generateFilename(reportType, period, startDate, endDate);
 
         switch (format) {
             case PDF:
@@ -81,6 +74,11 @@ public class ReportingController implements ReportingApi {
                 break;
             case JSON:
                 headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setContentDisposition(
+                        ContentDisposition.attachment() // Or inline if you want to display in browser
+                                .filename(filename + ".json")
+                                .build()
+                );
                 break;
             case CHART_PNG:
                 headers.setContentType(MediaType.IMAGE_PNG);
@@ -98,7 +96,6 @@ public class ReportingController implements ReportingApi {
                                 .build()
                 );
                 break;
-
             case EXCEL:
                 headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
                 headers.setContentDisposition(
@@ -107,9 +104,7 @@ public class ReportingController implements ReportingApi {
                                 .build()
                 );
                 break;
-            // Add other formats as needed
         }
-
         return headers;
     }
 
@@ -131,69 +126,40 @@ public class ReportingController implements ReportingApi {
     }
 
     @Override
-    public String viewReport(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate, Model model) {
-        return "";
+    public ResponseEntity<Long> getTotalRentalsMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getTotalRentals(startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<byte[]> exportReport(ReportingConstants.OutputFormat format, ReportingConstants.ReportType reportType, ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
-        return null;
+    public ResponseEntity<Double> getTotalRevenueMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getTotalRevenue(startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<Long> getTotalRentalsMetric(
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        long totalRentals = reportingService.getTotalRentals(startDate, endDate);
-        return ResponseEntity.ok(totalRentals);
+    public ResponseEntity<Long> getUniqueVehiclesRentedMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getUniqueVehiclesRented(startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<Double> getTotalRevenueMetric(
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        double totalRevenue = reportingService.getTotalRevenue(startDate, endDate);
-        return ResponseEntity.ok(totalRevenue);
+    public ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getMostRentedVehicle(startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<Long> getUniqueVehiclesRentedMetric(
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        long uniqueVehicles = reportingService.getUniqueVehiclesRented(startDate, endDate);
-        return ResponseEntity.ok(uniqueVehicles);
+    public ResponseEntity<Long> getNewCustomersCountMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getNewCustomersCount(startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        Map<String, Object> mostRented = reportingService.getMostRentedVehicle(startDate, endDate);
-        return ResponseEntity.ok(mostRented);
+    public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getRentalTrends(period, startDate, endDate));
     }
 
     @Override
-    public ResponseEntity<Long> getNewCustomersCountMetric(
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        long newCustomers = reportingService.getNewCustomersCount(startDate, endDate);
-        return ResponseEntity.ok(newCustomers);
+    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(LocalDate startDate, LocalDate endDate) {
+        return ResponseEntity.ok(reportingService.getVehicleUsage(startDate, endDate));
     }
 
-    @Override
-    public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
-            @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
-            @RequestParam(value = "startDate", required = false) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) LocalDate endDate
-    ) {
-        List<Map<String, Object>> rentalTrends = reportingService.getRentalTrends(period, startDate, endDate);
-        return ResponseEntity.ok(rentalTrends);
-    }
 
     @Override
     public ResponseEntity<byte[]> exportMetrics(ExportMetricsRequest request) {
@@ -214,7 +180,4 @@ public class ReportingController implements ReportingApi {
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(fileBytes);
     }
-
-
-
 }
