@@ -85,7 +85,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
 
         try {
             switch (reportType) {
-                case ReportingConstants.ReportType.MOST_RENTED_VEHICLES:
+                case MOST_RENTED_VEHICLES:
                     Map<Vehicle, Long> rentalCounts = (Map<Vehicle, Long>) data.get("rentalCountsByVehicle");
                     if (rentalCounts != null && !rentalCounts.isEmpty()) {
                         // Crear encabezados
@@ -104,7 +104,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                         row.createCell(0).setCellValue("No hay datos disponibles para los vehículos más alquilados.");
                     }
                     break;
-                case ReportingConstants.ReportType.RENTAL_TRENDS:
+                case RENTAL_TRENDS:
                     List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) data.get("rentalTrends");
                     if (rentalTrends != null && !rentalTrends.isEmpty()) {
                         // Crear encabezados
@@ -123,7 +123,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                         row.createCell(0).setCellValue("No hay datos disponibles para las tendencias de alquileres.");
                     }
                     break;
-                case ReportingConstants.ReportType.VEHICLE_USAGE:
+                case VEHICLE_USAGE:
                     Map<Vehicle, Long> usage = (Map<Vehicle, Long>) data.get("vehicleUsage");
                     if (usage != null && !usage.isEmpty()) {
                         // Crear encabezado
@@ -142,7 +142,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                         row.createCell(0).setCellValue("No hay datos disponibles para el uso de vehículos.");
                     }
                     break;
-                case ReportingConstants.ReportType.RENTAL_SUMMARY:
+                case RENTAL_SUMMARY:
                     // Crear encabezados
                     row = sheet.createRow(rowNum++);
                     row.createCell(0).setCellValue("Resumen de Alquileres");
@@ -165,7 +165,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                     row.createCell(0).setCellValue("Ingresos Totales:");
                     row.createCell(1).setCellValue(String.format("%.2f", data.get("totalRevenue")));
                     break;
-                case ReportingConstants.ReportType.REVENUE_ANALYSIS:
+                case REVENUE_ANALYSIS:
                     row = sheet.createRow(rowNum++);
                     row.createCell(0).setCellValue("Análisis de Ingresos");
                     row = sheet.createRow(rowNum++);
@@ -192,7 +192,7 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                         // No añadimos la tabla de tendencias directamente a la hoja principal
                     }
                     break;
-                case ReportingConstants.ReportType.CUSTOMER_ACTIVITY:
+                case CUSTOMER_ACTIVITY:
                     row = sheet.createRow(rowNum++);
                     row.createCell(0).setCellValue("Actividad de Clientes");
                     row = sheet.createRow(rowNum++);

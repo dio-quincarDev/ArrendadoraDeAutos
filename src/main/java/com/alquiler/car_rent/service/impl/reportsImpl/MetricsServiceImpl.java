@@ -129,16 +129,16 @@ public class MetricsServiceImpl implements MetricsService {
         DateTimeFormatter formatter;
 
         switch (period) {
-            case ReportingConstants.TimePeriod.MONTHLY:
+            case MONTHLY:
                 formatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 break;
-            case ReportingConstants.TimePeriod.QUARTERLY:
+            case QUARTERLY:
                 formatter = DateTimeFormatter.ofPattern("yyyy-QQQ");
                 break;
-            case ReportingConstants.TimePeriod.BIANNUAL:
+            case BIANNUAL:
                 formatter = DateTimeFormatter.ofPattern("yyyy-'H'");
                 break;
-            case ReportingConstants.TimePeriod.ANNUAL:
+            case ANNUAL:
                 formatter = DateTimeFormatter.ofPattern("yyyy");
                 break;
             default:

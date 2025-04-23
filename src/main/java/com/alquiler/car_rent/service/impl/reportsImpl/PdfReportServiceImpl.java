@@ -49,22 +49,22 @@ public class PdfReportServiceImpl implements PdfReportService {
     public void addReportContent(Document doc, ReportingConstants.ReportType type, Map<String, Object> data) {
         try {
             switch (type) {
-                case ReportingConstants.ReportType.MOST_RENTED_VEHICLES:
+                case MOST_RENTED_VEHICLES:
                     addMostRentedVehiclesTable(doc, data);
                     break;
-                case ReportingConstants.ReportType.RENTAL_TRENDS:
+                case RENTAL_TRENDS:
                     addRentalTrendsTable(doc, data);
                     break;
-                case ReportingConstants.ReportType.VEHICLE_USAGE:
+                case VEHICLE_USAGE:
                     addVehicleUsageList(doc, data);
                     break;
-                case ReportingConstants.ReportType.RENTAL_SUMMARY:
+                case RENTAL_SUMMARY:
                     addRentalSummary(doc, data);
                     break;
-                case ReportingConstants.ReportType.REVENUE_ANALYSIS:
+                case REVENUE_ANALYSIS:
                     addRevenueAnalysis(doc, data);
                     break;
-                case ReportingConstants.ReportType.CUSTOMER_ACTIVITY:
+                case CUSTOMER_ACTIVITY:
                     addCustomerActivity(doc, data);
                     break;
                 default:

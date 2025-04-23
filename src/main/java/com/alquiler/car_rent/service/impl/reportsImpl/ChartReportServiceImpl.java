@@ -14,10 +14,11 @@ import org.jfree.data.xy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
+
 
 import javax.imageio.ImageIO;
 
