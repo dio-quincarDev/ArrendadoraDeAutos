@@ -132,7 +132,8 @@ public class ReportingController implements ReportingApi {
 
     @Override
     public ResponseEntity<Double> getTotalRevenueMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getTotalRevenue(startDate, endDate));
+        Double revenue = reportingService.getTotalRevenue(startDate, endDate);
+        return ResponseEntity.ok(revenue != null ? revenue : 0.0);
     }
 
     @Override

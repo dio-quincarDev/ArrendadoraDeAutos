@@ -67,6 +67,9 @@ public class PdfReportServiceImpl implements PdfReportService {
                 case CUSTOMER_ACTIVITY:
                     addCustomerActivity(doc, data);
                     break;
+                case GENERIC_METRICS: // Nuevo caso
+                    addGenericMetricsContent(doc, data);
+                    break;
                 default:
                     Paragraph notSupported = new Paragraph("Contenido no soportado para este tipo de reporte.", normalFont);
                     doc.add(notSupported);
@@ -248,6 +251,20 @@ public class PdfReportServiceImpl implements PdfReportService {
                 logger.error("Error al cerrar el OutputStream: {}", e.getMessage(), e);
             }
         }
+    }
+    private void addGenericMetricsContent(Document doc, Map<String, Object> data) throws DocumentException {
+        Paragraph title = new Paragraph("Métricas Generales", headerFont);
+        doc.add(title);
+        doc.add(new Paragraph("Total de Alquileres: " + data.get("totalRentals"), normalFont));
+        doc.add(new Paragraph("Ingresos Totales: $" + String.format("%.2f", data.get("totalRevenue")), normalFont));
+        doc.add(new Paragraph("Vehículos Únicos Alquilados: " + data.get("uniqueVehicles"), normalFont));
+        Map<String, Object> mostRented = (Map<String, Object>) data.get("mostRentedVehicle");
+        if (mostRented != null) {
+            doc.add(new Paragraph("Vehículo Más Alquilado: " + mostRented.get("brand") + " " + mostRented.get("model") + " (" + mostRented.get("rentalCount") + " veces)", normalFont));
+        }
+        doc.add(new Paragraph("Nuevos Clientes: " + data.get("newCustomers"), normalFont));
+        // Puedes añadir más métricas aquí según los datos que tengas disponibles en el 'data' Map
+        doc.add(new Paragraph(" "));
     }
 
     @Override

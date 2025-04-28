@@ -47,7 +47,8 @@ public class ReportingConstants {
         REVENUE_ANALYSIS("Análisis de Ingresos"),
         CUSTOMER_ACTIVITY("Actividad de Clientes"),
         MOST_RENTED_VEHICLES("Vehículos Más Alquilados"),
-        RENTAL_TRENDS("Tendencias de Alquiler");
+        RENTAL_TRENDS("Tendencias de Alquiler"),
+        GENERIC_METRICS("Metricas Generales");
 
         private final String title;
 

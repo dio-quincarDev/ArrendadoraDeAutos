@@ -50,7 +50,23 @@ public class ReportingServiceImpl implements ReportingService {
     public byte[] generateReport(ReportingConstants.OutputFormat format, ReportingConstants.ReportType reportType, ReportingConstants.TimePeriod period,
                                  LocalDate startDate, LocalDate endDate) {
         try {
-            Map<String, Object> reportData = generateReportData(period, startDate, endDate);
+            Map<String, Object> reportData;
+            // ** Cambio: Lógica específica para GENERIC_METRICS **
+            if (reportType == ReportingConstants.ReportType.GENERIC_METRICS) {
+                reportData = new HashMap<>();
+                LocalDate start = startDate != null ? startDate : LocalDate.now().minusMonths(1); // O tu lógica por defecto
+                LocalDate end = endDate != null ? endDate : LocalDate.now();
+
+                reportData.put("totalRentals", metricsService.getTotalRentals(start, end));
+                reportData.put("totalRevenue", metricsService.getTotalRevenue(start, end));
+                reportData.put("uniqueVehicles", metricsService.getUniqueVehiclesRented(start, end));
+                reportData.put("mostRentedVehicle", metricsService.getMostRentedVehicle(start, end));
+                reportData.put("newCustomers", metricsService.getNewCustomersCount(start, end));
+                // Puedes añadir aquí cualquier otra métrica general que necesites
+            } else {
+                // ** Lógica existente para otros tipos de reportes **
+                reportData = generateReportData(period, startDate, endDate);
+            }
 
             switch (format) {
                 case PDF:

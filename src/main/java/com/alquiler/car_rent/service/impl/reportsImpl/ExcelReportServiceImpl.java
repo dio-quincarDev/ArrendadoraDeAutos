@@ -21,11 +21,9 @@ public class ExcelReportServiceImpl implements ExcelReportService {
 
     @Override
     public byte[] generateGenericTableExcel(List<String> headers, List<List<String>> data) {
-        // Implementación previa de generateGenericTableExcel...
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Reporte");
 
-        // Crear la fila de encabezados
         Row headerRow = sheet.createRow(0);
         CellStyle headerStyle = workbook.createCellStyle();
         Font headerFont = workbook.createFont();
@@ -38,7 +36,6 @@ public class ExcelReportServiceImpl implements ExcelReportService {
             cell.setCellStyle(headerStyle);
         }
 
-        // Crear las filas de datos
         CellStyle dataStyle = workbook.createCellStyle();
         Font dataFont = workbook.createFont();
         dataStyle.setFont(dataFont);
@@ -53,7 +50,6 @@ public class ExcelReportServiceImpl implements ExcelReportService {
             }
         }
 
-        // Ajustar el ancho de las columnas al contenido
         for (int i = 0; i < headers.size(); i++) {
             sheet.autoSizeColumn(i);
         }
@@ -88,12 +84,9 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                 case MOST_RENTED_VEHICLES:
                     Map<Vehicle, Long> rentalCounts = (Map<Vehicle, Long>) data.get("rentalCountsByVehicle");
                     if (rentalCounts != null && !rentalCounts.isEmpty()) {
-                        // Crear encabezados
                         row = sheet.createRow(rowNum++);
                         row.createCell(0).setCellValue("Vehículo");
                         row.createCell(1).setCellValue("Cantidad de Alquileres");
-
-                        // Crear datos
                         for (Map.Entry<Vehicle, Long> entry : rentalCounts.entrySet()) {
                             row = sheet.createRow(rowNum++);
                             row.createCell(0).setCellValue(entry.getKey().getBrand() + " " + entry.getKey().getModel());
@@ -107,12 +100,9 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                 case RENTAL_TRENDS:
                     List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) data.get("rentalTrends");
                     if (rentalTrends != null && !rentalTrends.isEmpty()) {
-                        // Crear encabezados
                         row = sheet.createRow(rowNum++);
                         row.createCell(0).setCellValue("Período");
                         row.createCell(1).setCellValue("Cantidad de Alquileres");
-
-                        // Crear datos
                         for (Map<String, Object> trend : rentalTrends) {
                             row = sheet.createRow(rowNum++);
                             row.createCell(0).setCellValue(String.valueOf(trend.get("period")));
@@ -126,12 +116,9 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                 case VEHICLE_USAGE:
                     Map<Vehicle, Long> usage = (Map<Vehicle, Long>) data.get("vehicleUsage");
                     if (usage != null && !usage.isEmpty()) {
-                        // Crear encabezado
                         row = sheet.createRow(rowNum++);
                         row.createCell(0).setCellValue("Vehículo");
                         row.createCell(1).setCellValue("Cantidad de Usos");
-
-                        // Crear datos
                         for (Map.Entry<Vehicle, Long> entry : usage.entrySet()) {
                             row = sheet.createRow(rowNum++);
                             row.createCell(0).setCellValue(entry.getKey().getBrand() + " " + entry.getKey().getModel());
@@ -143,7 +130,6 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                     }
                     break;
                 case RENTAL_SUMMARY:
-                    // Crear encabezados
                     row = sheet.createRow(rowNum++);
                     row.createCell(0).setCellValue("Resumen de Alquileres");
                     row = sheet.createRow(rowNum++);
@@ -183,13 +169,12 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                         Row headerRowTrends = trendsSheet.createRow(trendsRowNum++);
                         headerRowTrends.createCell(0).setCellValue("Período");
                         headerRowTrends.createCell(1).setCellValue("Ingresos Estimados");
-                        double averageRate = (Double) data.getOrDefault("averageRentalRate", 50.0); // Tarifa promedio por día (ejemplo)
+                        double averageRate = (Double) data.getOrDefault("averageRentalRate", 50.0);
                         for (Map<String, Object> trend : revenueTrends) {
                             Row dataRowTrends = trendsSheet.createRow(trendsRowNum++);
                             dataRowTrends.createCell(0).setCellValue(String.valueOf(trend.get("period")));
                             dataRowTrends.createCell(1).setCellValue(String.format("%.2f", (Long) trend.get("rentalCount") * averageRate));
                         }
-                        // No añadimos la tabla de tendencias directamente a la hoja principal
                     }
                     break;
                 case CUSTOMER_ACTIVITY:
@@ -230,17 +215,43 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                                 dataRowAvgDuration.createCell(1).setCellValue(String.format("%.2f", entry.getValue()));
                             }
                         }
-                        // No añadimos las tablas de top clientes y duración promedio directamente a la hoja principal
+                        break;
                     }
                     break;
-                // Puedes añadir más casos para otros reportTypes aquí
+                case ReportingConstants.ReportType.GENERIC_METRICS:
+                    row = sheet.createRow(rowNum++);
+                    row.createCell(0).setCellValue("Métrica");
+                    row.createCell(1).setCellValue("Valor");
+
+                    row = sheet.createRow(rowNum++);
+                    row.createCell(0).setCellValue("Total de Alquileres");
+                    row.createCell(1).setCellValue(String.valueOf(data.get("totalRentals")));
+
+                    row = sheet.createRow(rowNum++);
+                    row.createCell(0).setCellValue("Ingresos Totales");
+                    row.createCell(1).setCellValue(String.format("%.2f", data.get("totalRevenue")));
+
+                    row = sheet.createRow(rowNum++);
+                    row.createCell(0).setCellValue("Vehículos Únicos Alquilados");
+                    row.createCell(1).setCellValue(String.valueOf(data.get("uniqueVehicles")));
+
+                    if (data.get("mostRentedVehicle") != null) {
+                        Map<String, Object> mostRentedVehicle = (Map<String, Object>) data.get("mostRentedVehicle");
+                        row = sheet.createRow(rowNum++);
+                        row.createCell(0).setCellValue("Vehículo Más Alquilado");
+                        row.createCell(1).setCellValue(mostRentedVehicle.get("brand") + " " + mostRentedVehicle.get("model") + " (" + mostRentedVehicle.get("rentalCount") + " veces)");
+                    }
+
+                    row = sheet.createRow(rowNum++);
+                    row.createCell(0).setCellValue("Nuevos Clientes");
+                    row.createCell(1).setCellValue(String.valueOf(data.get("newCustomers")));
+                    break;
                 default:
                     row = sheet.createRow(rowNum++);
                     row.createCell(0).setCellValue("Reporte de Excel no implementado para: " + reportType.getTitle());
                     break;
             }
 
-            // Ajustar el ancho de las columnas al contenido de la hoja principal
             if (sheet.getPhysicalNumberOfRows() > 0) {
                 int lastCellNum = sheet.getRow(0).getLastCellNum();
                 for (int i = 0; i < lastCellNum; i++) {
