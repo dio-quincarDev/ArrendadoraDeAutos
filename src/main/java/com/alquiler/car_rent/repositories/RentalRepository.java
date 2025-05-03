@@ -1,41 +1,104 @@
 package com.alquiler.car_rent.repositories;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.alquiler.car_rent.commons.entities.Rental;
+import com.alquiler.car_rent.commons.enums.RentalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import com.alquiler.car_rent.commons.entities.Rental;
-import com.alquiler.car_rent.commons.enums.RentalStatus;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
+@Repository
 public interface RentalRepository extends JpaRepository<Rental, Long> {
 
     // Consultas básicas
     List<Rental> findByRentalStatus(RentalStatus status);
 
-    // Consulta optimizada para búsqueda entre fechas
-    @Query("SELECT r FROM Rental r WHERE " +
-            "(:start IS NULL OR r.endDate >= :start) AND " +
-            "(:end IS NULL OR r.startDate <= :end)")
-    Page<Rental> search(@Param("start") LocalDateTime start,
-                        @Param("end") LocalDateTime end,
-                        Pageable pageable);
+    // Consulta única optimizada con paginación
+    @Query("""
+        SELECT r FROM Rental r 
+        WHERE 
+            (:start IS NULL OR r.startDate <= :end) AND 
+            (:end IS NULL OR r.endDate >= :start)
+    """)
+    Page<Rental> searchByDateRange(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            Pageable pageable
+    );
 
-    // Consulta para obtener alquileres en un rango de fechas (no paginada)
-    @Query("SELECT r FROM Rental r WHERE " +
-            "(:start IS NULL OR r.endDate >= :start) AND " +
-            "(:end IS NULL OR r.startDate <= :end)")
-    List<Rental> findInDateRange(@Param("start") LocalDateTime start,
-                                 @Param("end") LocalDateTime end);
+    // Conteo directo sin cargar registros
+    @Query("""
+        SELECT COUNT(r) FROM Rental r 
+        WHERE 
+            (:start IS NULL OR r.startDate <= :end) AND 
+            (:end IS NULL OR r.endDate >= :start)
+    """)
+    long countByDateRange(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
-    // Método para contar alquileres en un rango de fechas (más eficiente)
-    @Query("SELECT COUNT(r) FROM Rental r WHERE " +
-            "(:start IS NULL OR r.endDate >= :start) AND " +
-            "(:end IS NULL OR r.startDate <= :end)")
-    long countInDateRange(@Param("start") LocalDateTime start,
-                          @Param("end") LocalDateTime end);
+    // Consulta nativa optimizada para tendencias
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            DATE_FORMAT(r.start_date, '%Y-%m') AS period,
+            COUNT(*) AS rentalCount 
+        FROM rentals r
+        WHERE r.start_date BETWEEN :start AND :end
+        GROUP BY period
+        ORDER BY period ASC
+    """)
+    List<Map<String, Object>> findRentalTrends(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // Proyección para métricas de ingresos
+    @Query("""
+        SELECT COALESCE(SUM(r.totalPrice), 0.0) 
+        FROM Rental r 
+        WHERE r.startDate BETWEEN :start AND :end
+    """)
+    double getTotalRevenueInRange(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // Para promedio de duración por cliente
+    @Query("""
+    SELECT 
+        c.name AS customerName,
+        AVG(DATEDIFF(r.endDate, r.startDate)) AS avgDays 
+    FROM Rental r 
+    JOIN r.customer c 
+    WHERE r.startDate BETWEEN :start AND :end 
+        AND c.id IN :customerIds 
+    GROUP BY c.name
+""")
+    List<Object[]> findAverageDurationByCustomer(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("customerIds") List<Long> customerIds
+    );
+
+    // Para uso de vehículos
+    @Query("""
+    SELECT 
+        v,
+        COUNT(r) AS usageCount 
+    FROM Rental r 
+    JOIN r.vehicle v 
+    WHERE r.startDate BETWEEN :start AND :end 
+    GROUP BY v
+""")
+    List<Object[]> findVehicleUsage(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

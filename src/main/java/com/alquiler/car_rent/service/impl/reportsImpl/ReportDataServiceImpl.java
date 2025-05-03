@@ -90,7 +90,7 @@ public class ReportDataServiceImpl implements ReportDataService {
         Page<Rental> page;
 
         do {
-            page = rentalRepository.search(start, end, PageRequest.of(pageNum++, pageSize));
+            page = rentalRepository.searchByDateRange(start, end, PageRequest.of(pageNum++, pageSize));
             allRentals.addAll(page.getContent());
         } while (page.hasNext());
 

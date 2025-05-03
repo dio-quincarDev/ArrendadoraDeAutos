@@ -15,12 +15,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,25 +37,9 @@ public class MetricsServiceImpl implements MetricsService {
 
     private Pair<LocalDateTime, LocalDateTime> getDateRange(LocalDate startDate, LocalDate endDate,
                                                             ReportingConstants.TimePeriod defaultPeriod) {
-
-        LocalDate start = startDate;
-        LocalDate end = endDate;
-
-        if (start == null) {
-            end = LocalDate.now();
-            start = end.minus(defaultPeriod.getValue(), defaultPeriod.getUnit());
-        }
-        if (end == null) {
-            end = LocalDate.now();
-        }
-        return Pair.of(
-                start.atStartOfDay(),
-                end.plusDays(1).atStartOfDay()
-        );
-    }
-
-    private LocalDateTime toDateTime(LocalDate date) {
-        return date != null ? date.atStartOfDay() : null;
+        LocalDate start = startDate != null ? startDate : LocalDate.now().minus(defaultPeriod.getValue(), defaultPeriod.getUnit());
+        LocalDate end = endDate != null ? endDate : LocalDate.now();
+        return Pair.of(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
     }
 
     private List<Rental> getRentalsInRange(LocalDateTime start, LocalDateTime end) {
@@ -65,7 +47,7 @@ public class MetricsServiceImpl implements MetricsService {
         List<Rental> allRentals = new ArrayList<>();
         Page<Rental> page;
         do {
-            page = rentalRepository.search(start, end, PageRequest.of(pageNum++, pageSize));
+            page = rentalRepository.searchByDateRange(start, end, PageRequest.of(pageNum++, pageSize));
             allRentals.addAll(page.getContent());
         } while (page.hasNext());
         return allRentals;
@@ -74,23 +56,19 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        return rentalRepository.countInDateRange(dateRange.getFirst(), dateRange.getSecond());
+        return rentalRepository.countByDateRange(dateRange.getFirst(), dateRange.getSecond());
     }
 
     @Override
     public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
-                .mapToDouble(rental -> rental.getTotalPrice().doubleValue())
-                .sum();
+        return rentalRepository.getTotalRevenueInRange(dateRange.getFirst(), dateRange.getSecond());
     }
 
     @Override
     public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
+        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .map(Rental::getVehicle)
                 .distinct()
                 .count();
@@ -99,15 +77,15 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
+        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()))
                 .entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(entry -> {
                     Map<String, Object> result = new HashMap<>();
-                    result.put("brand", ((Vehicle) entry.getKey()).getBrand());
-                    result.put("model", ((Vehicle) entry.getKey()).getModel());
+                    Vehicle vehicle = entry.getKey();
+                    result.put("brand", vehicle.getBrand());
+                    result.put("model", vehicle.getModel());
                     result.put("rentalCount", entry.getValue());
                     return result;
                 })
@@ -121,52 +99,41 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public List<Map<String, Object>> getRentalTrends(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> getRentalTrends(ReportingConstants.TimePeriod period,
+                                                     LocalDate startDate,
+                                                     LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
-        LocalDate start = dateRange.getFirst().toLocalDate();
-        LocalDate end = dateRange.getSecond().toLocalDate().minusDays(1);
+        List<Map<String, Object>> trendsData = rentalRepository.findRentalTrends(
+                dateRange.getFirst(),
+                dateRange.getSecond()
+        );
+        DateTimeFormatter formatter = getFormatterForPeriod(period);
+        return trendsData.stream()
+                .map(entry -> {
+                    String rawPeriod = (String) entry.get("period");
+                    LocalDate date = LocalDate.parse(rawPeriod + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    return Map.of(
+                            "period", date.format(formatter),
+                            "rentalCount", entry.get("rentalCount")
+                    );
+                })
+                .collect(Collectors.toList());
+    }
 
-        DateTimeFormatter formatter;
-
+    private DateTimeFormatter getFormatterForPeriod(ReportingConstants.TimePeriod period) {
         switch (period) {
-            case MONTHLY:
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-                break;
-            case QUARTERLY:
-                formatter = DateTimeFormatter.ofPattern("yyyy-QQQ");
-                break;
-            case BIANNUAL:
-                formatter = DateTimeFormatter.ofPattern("yyyy-'H'");
-                break;
-            case ANNUAL:
-                formatter = DateTimeFormatter.ofPattern("yyyy");
-                break;
-            default:
-                formatter = DateTimeFormatter.ISO_DATE;
-                break;
+            case MONTHLY: return DateTimeFormatter.ofPattern("yyyy-MM");
+            case QUARTERLY: return DateTimeFormatter.ofPattern("yyyy-'Q'Q");
+            case BIANNUAL: return DateTimeFormatter.ofPattern("yyyy-'H'");
+            case ANNUAL: return DateTimeFormatter.ofPattern("yyyy");
+            default: return DateTimeFormatter.ISO_DATE;
         }
-
-        LocalDate current = start;
-        List<Map<String, Object>> trends = new ArrayList<>();
-
-        while (!current.isAfter(end)) {
-            LocalDate next = current.plus(period.getValue(), period.getUnit());
-            long rentalCount = rentalRepository.countInDateRange(
-                    toDateTime(current),
-                    toDateTime(next)
-            );
-            trends.add(Map.of("period", current.format(formatter), "rentalCount", rentalCount));
-            current = next;
-        }
-
-        return trends;
     }
 
     @Override
     public long getUniqueCustomersRented(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
+        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .map(Rental::getCustomer)
                 .distinct()
                 .count();
@@ -176,40 +143,33 @@ public class MetricsServiceImpl implements MetricsService {
     public double getAverageRentalDuration(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
         List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        if (rentals.isEmpty()) {
-            return 0;
-        }
-        long totalDuration = rentals.stream()
-                .mapToLong(rental -> ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate()))
+        if (rentals.isEmpty()) return 0;
+        long total = rentals.stream()
+                .mapToLong(r -> ChronoUnit.DAYS.between(r.getStartDate(), r.getEndDate()))
                 .sum();
-        return (double) totalDuration / rentals.size();
+        return (double) total / rentals.size();
     }
 
     @Override
     public long getActiveCustomersCount(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
-                .map(Rental::getCustomer)
-                .distinct()
-                .count();
+        return getUniqueCustomersRented(startDate, endDate);
     }
 
     @Override
     public List<Map<String, Object>> getTopCustomersByRentals(LocalDate startDate, LocalDate endDate, int limit) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
+        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .collect(Collectors.groupingBy(Rental::getCustomer, Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.<Customer, Long>comparingByValue().reversed())
                 .limit(limit)
                 .map(entry -> {
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("customerId", entry.getKey().getId());
-                    result.put("name", entry.getKey().getName()); // Usando customer.getName()
-                    result.put("rentalCount", entry.getValue());
-                    return result;
+                    Map<String, Object> customerMap = new HashMap<>();
+                    customerMap.put("customerId", entry.getKey().getId());
+                    customerMap.put("name", entry.getKey().getName());
+                    customerMap.put("email", entry.getKey().getEmail());
+                    customerMap.put("rentalCount", entry.getValue());
+                    return customerMap;
                 })
                 .collect(Collectors.toList());
     }
@@ -217,24 +177,27 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public Map<String, Double> getAverageRentalDurationByCustomer(LocalDate startDate, LocalDate endDate, List<Long> customerIds) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
-                .filter(rental -> customerIds.contains(rental.getCustomer().getId()))
-                .collect(Collectors.groupingBy(Rental::getCustomer,
-                        Collectors.averagingLong(rental -> ChronoUnit.DAYS.between(rental.getStartDate(), rental.getEndDate()))))
-                .entrySet().stream()
+        return rentalRepository.findAverageDurationByCustomer(
+                        dateRange.getFirst(),
+                        dateRange.getSecond(),
+                        customerIds
+                ).stream()
                 .collect(Collectors.toMap(
-                        entry -> entry.getKey().getName(), // Usando customer.getName()
-                        Map.Entry::getValue
+                        arr -> (String) arr[0],
+                        arr -> (Double) arr[1]
                 ));
     }
 
     @Override
     public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
-        return rentals.stream()
-                .collect(Collectors.groupingBy(rental -> rental.getVehicle(), Collectors.counting()));
+        return rentalRepository.findVehicleUsage(
+                        dateRange.getFirst(),
+                        dateRange.getSecond()
+                ).stream()
+                .collect(Collectors.toMap(
+                        arr -> (Vehicle) arr[0],
+                        arr -> (Long) arr[1]
+                ));
     }
-
 }
