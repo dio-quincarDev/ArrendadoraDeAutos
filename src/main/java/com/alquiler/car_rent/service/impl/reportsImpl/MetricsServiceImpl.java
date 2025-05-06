@@ -7,6 +7,8 @@ import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.reportService.MetricsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class MetricsServiceImpl implements MetricsService {
+    private static final Logger logger = LoggerFactory.getLogger(MetricsServiceImpl.class);
 
     private final RentalRepository rentalRepository;
     private final CustomerRepository customerRepository;
@@ -77,19 +79,20 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
-                .collect(Collectors.groupingBy(Rental::getVehicle, Collectors.counting()))
-                .entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(entry -> {
-                    Map<String, Object> result = new HashMap<>();
-                    Vehicle vehicle = entry.getKey();
-                    result.put("brand", vehicle.getBrand());
-                    result.put("model", vehicle.getModel());
-                    result.put("rentalCount", entry.getValue());
-                    return result;
-                })
-                .orElse(new HashMap<>());
+
+        // Usar la consulta optimizada del repositorio en lugar de la lógica manual
+        List<Map<String,Object>> results = rentalRepository.findMostRentedVehicle(dateRange.getFirst(), dateRange.getSecond());
+
+        if (results == null || results.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Map<String, Object> mostRented = results.get(0);
+        return Map.of(
+                "brand", mostRented.get("brand"),
+                "model", mostRented.get("model"),
+                "rentalCount", mostRented.get("rentalCount")
+        );
     }
 
     @Override
@@ -158,17 +161,35 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public List<Map<String, Object>> getTopCustomersByRentals(LocalDate startDate, LocalDate endDate, int limit) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
-                .collect(Collectors.groupingBy(Rental::getCustomer, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<Customer, Long>comparingByValue().reversed())
-                .limit(limit)
+
+        // Usar la consulta optimizada del repositorio con paginación
+        List<Object[]> topCustomers = rentalRepository.findTopCustomersByRentals(
+                dateRange.getFirst(),
+                dateRange.getSecond(),
+                PageRequest.of(0, limit)
+        );
+
+        return topCustomers.stream()
                 .map(entry -> {
+                    logger.debug("Raw entry from findTopCustomersByRentals: {}", Arrays.toString(entry));
+                    Object firstElement = entry[0];
+                    Object secondElement = entry[1];
+                    Object thirdElement = entry[2];
+
+                    logger.debug("Types: entry[0]={}, entry[1]={}, entry[2]={}",
+                            firstElement != null ? firstElement.getClass().getName() : null,
+                            secondElement != null ? secondElement.getClass().getName() : null,
+                            thirdElement != null ? thirdElement.getClass().getName() : null);
+
+
+                    String name = (String) entry[1];
+                    Long customerId = (Long) entry[0];
+                    Long rentalCount = (Long) entry[2];
+
                     Map<String, Object> customerMap = new HashMap<>();
-                    customerMap.put("customerId", entry.getKey().getId());
-                    customerMap.put("name", entry.getKey().getName());
-                    customerMap.put("email", entry.getKey().getEmail());
-                    customerMap.put("rentalCount", entry.getValue());
+                    customerMap.put("customerId", customerId);
+                    customerMap.put("name", name);
+                    customerMap.put("rentalCount", rentalCount);
                     return customerMap;
                 })
                 .collect(Collectors.toList());
@@ -191,13 +212,21 @@ public class MetricsServiceImpl implements MetricsService {
     @Override
     public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+
         return rentalRepository.findVehicleUsage(
                         dateRange.getFirst(),
                         dateRange.getSecond()
                 ).stream()
                 .collect(Collectors.toMap(
-                        arr -> (Vehicle) arr[0],
-                        arr -> (Long) arr[1]
+                        entry -> {
+                            // Construye un Vehicle temporal solo con los datos necesarios
+                            Vehicle vehicle = new Vehicle();
+                            vehicle.setId((Long) entry.get("vehicleId"));
+                            vehicle.setBrand((String) entry.get("brand"));
+                            vehicle.setModel((String) entry.get("model"));
+                            return vehicle;
+                        },
+                        entry -> (Long) entry.get("usageCount")
                 ));
     }
 }

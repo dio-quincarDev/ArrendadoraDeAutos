@@ -1,20 +1,18 @@
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
-
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 
 @Service
 public class ReportingServiceImpl implements ReportingService {
-
 
     private static final Logger logger = LoggerFactory.getLogger(ReportingServiceImpl.class);
 
@@ -51,41 +49,41 @@ public class ReportingServiceImpl implements ReportingService {
                                  LocalDate startDate, LocalDate endDate) {
         try {
             Map<String, Object> reportData;
-            // ** Cambio: Lógica específica para GENERIC_METRICS **
             if (reportType == ReportingConstants.ReportType.GENERIC_METRICS) {
-                reportData = new HashMap<>();
-                LocalDate start = startDate != null ? startDate : LocalDate.now().minusMonths(1); // O tu lógica por defecto
-                LocalDate end = endDate != null ? endDate : LocalDate.now();
+                LocalDate[] range = resolveDateRange(startDate, endDate);
+                LocalDate start = range[0], end = range[1];
 
+                reportData = new HashMap<>();
                 reportData.put("totalRentals", metricsService.getTotalRentals(start, end));
                 reportData.put("totalRevenue", metricsService.getTotalRevenue(start, end));
                 reportData.put("uniqueVehicles", metricsService.getUniqueVehiclesRented(start, end));
                 reportData.put("mostRentedVehicle", metricsService.getMostRentedVehicle(start, end));
                 reportData.put("newCustomers", metricsService.getNewCustomersCount(start, end));
-                // Puedes añadir aquí cualquier otra métrica general que necesites
             } else {
-                // ** Lógica existente para otros tipos de reportes **
                 reportData = generateReportData(period, startDate, endDate);
             }
 
-            switch (format) {
-                case PDF:
-                    return pdfReportService.generateReport(reportData, reportType, format);
-                case EXCEL:
-                    return excelReportService.generateReport(reportData, reportType, format);
-                case JSON:
-                    return jsonReportService.generateReport(reportData, reportType, format);
-                case CHART_PNG:
-                    return chartReportService.generateChartAsPng(reportData, reportType);
-                case CHART_SVG:
-                    return chartReportService.generateChartAsSvg(reportData, reportType);
-                default:
-                    throw new IllegalArgumentException("Formato no soportado: " + format);
-            }
+            return switch (format) {
+                case PDF -> pdfReportService.generateReport(reportData, reportType, format);
+                case EXCEL -> excelReportService.generateReport(reportData, reportType, format);
+                case JSON -> jsonReportService.generateReport(reportData, reportType, format);
+                case CHART_PNG -> chartReportService.generateChartAsPng(reportData, reportType);
+                case CHART_SVG -> chartReportService.generateChartAsSvg(reportData, reportType);
+                default -> throw new IllegalArgumentException("Formato no soportado: " + format);
+            };
         } catch (Exception e) {
-            logger.error("Error al generar reporte: {}", e.getMessage(), e);
+            logger.error("Error al generar reporte [{} - {} - {}]: {}", format, reportType, period, e.getMessage(), e);
             throw new RuntimeException("Error al generar reporte: " + e.getMessage(), e);
         }
+    }
+
+    private LocalDate[] resolveDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDate defaultStart = LocalDate.now().minusMonths(1);
+        LocalDate defaultEnd = LocalDate.now();
+        return new LocalDate[] {
+                Optional.ofNullable(startDate).orElse(defaultStart),
+                Optional.ofNullable(endDate).orElse(defaultEnd)
+        };
     }
 
     @Override

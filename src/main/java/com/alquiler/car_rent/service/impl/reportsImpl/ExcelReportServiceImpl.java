@@ -4,7 +4,7 @@ import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.ExcelReportService;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,266 +17,268 @@ import java.util.Map;
 @Service
 public class ExcelReportServiceImpl implements ExcelReportService {
 
-    private final static Logger logger = LoggerFactory.getLogger(ExcelReportServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExcelReportServiceImpl.class);
+    private static final String FONT_NAME = "Arial";
+    private static final short HEADER_FONT_SIZE = 12;
 
-    @Override
-    public byte[] generateGenericTableExcel(List<String> headers, List<List<String>> data) {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Reporte");
+    // 1. Métodos reutilizables para estilos (Nuevo)
+    private XSSFCellStyle createHeaderStyle(XSSFWorkbook workbook) {
+        XSSFFont font = workbook.createFont();
+        font.setFontName(FONT_NAME);
+        font.setBold(true);
+        font.setFontHeightInPoints(HEADER_FONT_SIZE);
+        font.setColor(IndexedColors.WHITE.getIndex());
 
-        Row headerRow = sheet.createRow(0);
-        CellStyle headerStyle = workbook.createCellStyle();
-        Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
-        headerStyle.setFont(headerFont);
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 33, (byte) 82, (byte) 131}, null)); // Azul corporativo
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
 
-        for (int i = 0; i < headers.size(); i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers.get(i));
-            cell.setCellStyle(headerStyle);
-        }
+    private XSSFCellStyle createDataStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
 
-        CellStyle dataStyle = workbook.createCellStyle();
-        Font dataFont = workbook.createFont();
-        dataStyle.setFont(dataFont);
-
-        for (int i = 0; i < data.size(); i++) {
-            Row dataRow = sheet.createRow(i + 1);
-            List<String> rowData = data.get(i);
-            for (int j = 0; j < rowData.size(); j++) {
-                Cell cell = dataRow.createCell(j);
-                cell.setCellValue(rowData.get(j));
-                cell.setCellStyle(dataStyle);
-            }
-        }
-
-        for (int i = 0; i < headers.size(); i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            workbook.write(outputStream);
-            return outputStream.toByteArray();
-        } catch (IOException e) {
-            logger.error("Error al generar el archivo Excel: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al generar el reporte Excel", e);
-        } finally {
-            try {
-                outputStream.close();
-                workbook.close();
-            } catch (IOException e) {
-                logger.error("Error al cerrar recursos de Excel: {}", e.getMessage(), e);
-            }
+    // 2. Método para crear celdas de forma segura (Nuevo)
+    private void createSafeCell(Row row, int column, Object value, XSSFCellStyle style) {
+        Cell cell = row.createCell(column);
+        if (value instanceof Number) {
+            cell.setCellValue(((Number) value).doubleValue());
+        } else if (value instanceof Boolean) {
+            cell.setCellValue((Boolean) value);
+        } else if (value instanceof java.util.Date) {
+            cell.setCellValue((java.util.Date) value);
+        } else {
+            cell.setCellValue(value != null ? value.toString() : "N/A");
         }
     }
 
-    @Override
-    public byte[] generateReport(Map<String, Object> data, ReportingConstants.ReportType reportType, ReportingConstants.OutputFormat format) {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet(reportType.getTitle());
-        int rowNum = 0;
-        Row row;
-        Cell cell;
 
-        try {
+        @Override
+    public byte[] generateReport(Map<String, Object> data, ReportingConstants.ReportType reportType, ReportingConstants.OutputFormat format) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) { // 3. Try-with-resources (Mejorado)
+            XSSFSheet sheet = workbook.createSheet(reportType.getTitle());
+
+            // Usar arreglo para permitir modificación en lambdas
+            final int[] rowNum = {0};
+
+            // Estilos reutilizables
+            XSSFCellStyle headerStyle = createHeaderStyle(workbook);
+            XSSFCellStyle dataStyle = createDataStyle(workbook);
+
             switch (reportType) {
                 case MOST_RENTED_VEHICLES:
-                    Map<Vehicle, Long> rentalCounts = (Map<Vehicle, Long>) data.get("rentalCountsByVehicle");
-                    if (rentalCounts != null && !rentalCounts.isEmpty()) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Vehículo");
-                        row.createCell(1).setCellValue("Cantidad de Alquileres");
-                        for (Map.Entry<Vehicle, Long> entry : rentalCounts.entrySet()) {
-                            row = sheet.createRow(rowNum++);
-                            row.createCell(0).setCellValue(entry.getKey().getBrand() + " " + entry.getKey().getModel());
-                            row.createCell(1).setCellValue(entry.getValue());
-                        }
+                    Row headerRowMostRented = sheet.createRow(rowNum[0]++);
+                    createSafeCell(headerRowMostRented, 0, "Vehículo", headerStyle);
+                    createSafeCell(headerRowMostRented, 1, "Alquileres", headerStyle);
+
+                    if (data.get("mostRentedVehicle") instanceof Map) {
+                        Map<?, ?> mostRented = (Map<?, ?>) data.get("mostRentedVehicle");
+                        Row dataRow = sheet.createRow(rowNum[0]++);
+                        createSafeCell(dataRow, 0, mostRented.get("brand") + " " + mostRented.get("model"), dataStyle);
+                        createSafeCell(dataRow, 1, mostRented.get("rentalCount"), dataStyle);
                     } else {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("No hay datos disponibles para los vehículos más alquilados.");
+                        createSafeCell(sheet.createRow(rowNum[0]++), 0, "Sin datos disponibles", dataStyle);
                     }
                     break;
+
                 case RENTAL_TRENDS:
-                    List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) data.get("rentalTrends");
-                    if (rentalTrends != null && !rentalTrends.isEmpty()) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Período");
-                        row.createCell(1).setCellValue("Cantidad de Alquileres");
-                        for (Map<String, Object> trend : rentalTrends) {
-                            row = sheet.createRow(rowNum++);
-                            row.createCell(0).setCellValue(String.valueOf(trend.get("period")));
-                            row.createCell(1).setCellValue(String.valueOf(trend.get("rentalCount")));
+                    Row headerRowTrends = sheet.createRow(rowNum[0]++);
+                    createSafeCell(headerRowTrends, 0, "Período", headerStyle);
+                    createSafeCell(headerRowTrends, 1, "Alquileres", headerStyle);
+
+                    if (data.get("rentalTrends") instanceof List) {
+                        List<Map<String, Object>> trends = (List<Map<String, Object>>) data.get("rentalTrends");
+                        if (!trends.isEmpty()) {
+                            trends.forEach(trend -> {
+                                Row dataRow = sheet.createRow(rowNum[0]++);
+                                createSafeCell(dataRow, 0, trend.get("period"), dataStyle);
+                                createSafeCell(dataRow, 1, trend.get("rentalCount"), dataStyle);
+                            });
+                        } else {
+                            createSafeCell(sheet.createRow(rowNum[0]++), 0, "Sin datos disponibles", dataStyle);
                         }
-                    } else {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("No hay datos disponibles para las tendencias de alquileres.");
                     }
                     break;
-                case VEHICLE_USAGE:
-                    Map<Vehicle, Long> usage = (Map<Vehicle, Long>) data.get("vehicleUsage");
-                    if (usage != null && !usage.isEmpty()) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Vehículo");
-                        row.createCell(1).setCellValue("Cantidad de Usos");
-                        for (Map.Entry<Vehicle, Long> entry : usage.entrySet()) {
-                            row = sheet.createRow(rowNum++);
-                            row.createCell(0).setCellValue(entry.getKey().getBrand() + " " + entry.getKey().getModel());
-                            row.createCell(1).setCellValue(entry.getValue());
-                        }
-                    } else {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("No hay datos disponibles para el uso de vehículos.");
-                    }
-                    break;
+
                 case RENTAL_SUMMARY:
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Resumen de Alquileres");
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Total de Alquileres:");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("totalRentals")));
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Clientes Únicos:");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("uniqueCustomers")));
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Duración Promedio (días):");
-                    row.createCell(1).setCellValue(String.format("%.2f", data.get("averageRentalDuration")));
-                    Map<String, Object> mostRented = (Map<String, Object>) data.get("mostRentedVehicle");
-                    if (mostRented != null) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Vehículo Más Alquilado:");
-                        row.createCell(1).setCellValue(mostRented.get("brand") + " " + mostRented.get("model") + " (" + mostRented.get("rentalCount") + " veces)");
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "RESUMEN DE ALQUILERES", headerStyle);
+
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Total de Alquileres:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("totalRentals"), dataStyle);
+
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Clientes Únicos:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("uniqueCustomers"), dataStyle);
+
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Duración Promedio (días):", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("averageRentalDuration"), dataStyle);
+
+                    if (data.get("mostRentedVehicle") instanceof Map) {
+                        Map<?, ?> mostRented = (Map<?, ?>) data.get("mostRentedVehicle");
+                        createSafeCell(sheet.createRow(rowNum[0]++), 0, "Vehículo Más Alquilado:", dataStyle);
+                        createSafeCell(sheet.getRow(rowNum[0] - 1), 1,
+                                mostRented.get("brand") + " " + mostRented.get("model") + " (" + mostRented.get("rentalCount") + ")",
+                                dataStyle);
                     }
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Ingresos Totales:");
-                    row.createCell(1).setCellValue(String.format("%.2f", data.get("totalRevenue")));
+
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Ingresos Totales:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("totalRevenue"), dataStyle);
                     break;
+
+                case VEHICLE_USAGE:
+                    Row headerRowVehicleUsage = sheet.createRow(rowNum[0]++);
+                    createSafeCell(headerRowVehicleUsage, 0, "VEHÍCULO", headerStyle);
+                    createSafeCell(headerRowVehicleUsage, 1, "USOS", headerStyle);
+
+                    if (data.get("vehicleUsage") instanceof Map) {
+                        Map<Vehicle, Long> usage = (Map<Vehicle, Long>) data.get("vehicleUsage");
+                        usage.forEach((vehicle, count) -> {
+                            Row row = sheet.createRow(rowNum[0]++);
+                            createSafeCell(row, 0, vehicle.getBrand() + " " + vehicle.getModel(), dataStyle);
+                            createSafeCell(row, 1, count, dataStyle);
+                        });
+                    } else {
+                        createSafeCell(sheet.createRow(rowNum[0]++), 0, "Sin datos de uso", dataStyle);
+                    }
+                    break;
+
                 case REVENUE_ANALYSIS:
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Análisis de Ingresos");
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Ingresos Totales:");
-                    row.createCell(1).setCellValue(String.format("%.2f", data.get("totalRevenue")));
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Ingresos Promedio por Alquiler:");
-                    row.createCell(1).setCellValue(String.format("%.2f", (Double) data.get("totalRevenue") / (Long) data.get("totalRentals")));
-                    List<Map<String, Object>> revenueTrends = (List<Map<String, Object>>) data.get("rentalTrends");
-                    if (revenueTrends != null && !revenueTrends.isEmpty()) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Tendencias de Ingresos (Estimado):");
-                        Sheet trendsSheet = workbook.createSheet("Tendencias de Ingresos");
-                        int trendsRowNum = 0;
-                        Row headerRowTrends = trendsSheet.createRow(trendsRowNum++);
-                        headerRowTrends.createCell(0).setCellValue("Período");
-                        headerRowTrends.createCell(1).setCellValue("Ingresos Estimados");
-                        double averageRate = (Double) data.getOrDefault("averageRentalRate", 50.0);
-                        for (Map<String, Object> trend : revenueTrends) {
-                            Row dataRowTrends = trendsSheet.createRow(trendsRowNum++);
-                            dataRowTrends.createCell(0).setCellValue(String.valueOf(trend.get("period")));
-                            dataRowTrends.createCell(1).setCellValue(String.format("%.2f", (Long) trend.get("rentalCount") * averageRate));
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "ANÁLISIS DE INGRESOS", headerStyle);
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Ingresos Totales:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("totalRevenue"), dataStyle);
+
+                    if (data.containsKey("totalRentals") && data.get("totalRentals") instanceof Number &&
+                            data.containsKey("totalRevenue") && data.get("totalRevenue") instanceof Number) {
+                        double avgRevenue = ((Number) data.get("totalRevenue")).doubleValue() / ((Number) data.get("totalRentals")).doubleValue();
+                        createSafeCell(sheet.createRow(rowNum[0]++), 0, "Promedio por Alquiler:", dataStyle);
+                        createSafeCell(sheet.getRow(rowNum[0] - 1), 1, avgRevenue, dataStyle);
+                    }
+
+                    if (data.get("rentalTrends") instanceof List) {
+                        XSSFSheet trendsSheet = workbook.createSheet("Tendencias de Ingresos");
+                        Row headerRowRevenueTrends = trendsSheet.createRow(0);
+                        createSafeCell(headerRowRevenueTrends, 0, "Período", headerStyle);
+                        createSafeCell(headerRowRevenueTrends, 1, "Alquileres", headerStyle);
+
+                        List<Map<String, Object>> trends = (List<Map<String, Object>>) data.get("rentalTrends");
+                        int trendsRowNum = 1;
+                        for (Map<String, Object> trend : trends) {
+                            Row row = trendsSheet.createRow(trendsRowNum++);
+                            createSafeCell(row, 0, trend.get("period"), dataStyle);
+                            createSafeCell(row, 1, trend.get("rentalCount"), dataStyle);
+                        }
+                        // Autoajuste para la hoja de tendencias
+                        for (int i = 0; i < headerRowRevenueTrends.getLastCellNum(); i++) {
+                            trendsSheet.autoSizeColumn(i);
                         }
                     }
                     break;
+
                 case CUSTOMER_ACTIVITY:
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Actividad de Clientes");
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Total de Clientes Activos:");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("activeCustomers")));
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Nuevos Clientes:");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("newCustomers")));
-                    List<Map<String, Object>> topCustomers = (List<Map<String, Object>>) data.get("topCustomersByRentals");
-                    if (topCustomers != null && !topCustomers.isEmpty()) {
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Clientes con Mayor Actividad:");
-                        Sheet topCustomersSheet = workbook.createSheet("Top Clientes");
-                        int topCustomersRowNum = 0;
-                        Row headerRowTopCustomers = topCustomersSheet.createRow(topCustomersRowNum++);
-                        headerRowTopCustomers.createCell(0).setCellValue("ID Cliente");
-                        headerRowTopCustomers.createCell(1).setCellValue("Nombre Cliente");
-                        headerRowTopCustomers.createCell(2).setCellValue("Cantidad de Alquileres");
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "ACTIVIDAD DE CLIENTES", headerStyle);
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Clientes Únicos:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("uniqueCustomers"), dataStyle);
+                    createSafeCell(sheet.createRow(rowNum[0]++), 0, "Nuevos Clientes:", dataStyle);
+                    createSafeCell(sheet.getRow(rowNum[0] - 1), 1, data.get("newCustomers"), dataStyle);
+
+                    if (data.get("topCustomersByRentals") instanceof List) {
+                        XSSFSheet topCustomersSheet = workbook.createSheet("Top Clientes por Alquileres");
+                        Row headerRowTopCustomers = topCustomersSheet.createRow(0);
+                        createSafeCell(headerRowTopCustomers, 0, "Cliente", headerStyle);
+                        createSafeCell(headerRowTopCustomers, 1, "Total Alquileres", headerStyle);
+                        createSafeCell(headerRowTopCustomers, 2, "Email", headerStyle); // Incluir email
+
+                        List<Map<String, Object>> topCustomers = (List<Map<String, Object>>) data.get("topCustomersByRentals");
+                        int topRowNum = 1;
                         for (Map<String, Object> customer : topCustomers) {
-                            Row dataRowTopCustomers = topCustomersSheet.createRow(topCustomersRowNum++);
-                            dataRowTopCustomers.createCell(0).setCellValue(String.valueOf(customer.get("customerId")));
-                            dataRowTopCustomers.createCell(1).setCellValue(String.valueOf(customer.get("name")));
-                            dataRowTopCustomers.createCell(2).setCellValue(String.valueOf(customer.get("rentalCount")));
+                            Row row = topCustomersSheet.createRow(topRowNum++);
+                            createSafeCell(row, 0, customer.get("name"), dataStyle);
+                            createSafeCell(row, 1, customer.get("rentalCount"), dataStyle);
+                            createSafeCell(row, 2, customer.get("email"), dataStyle); // Incluir email
                         }
-                        Map<String, Double> avgDurationByCustomer = (Map<String, Double>) data.get("averageRentalDurationByTopCustomers");
-                        if (avgDurationByCustomer != null && !avgDurationByCustomer.isEmpty()) {
-                            Sheet avgDurationSheet = workbook.createSheet("Promedio Duración por Cliente");
-                            int avgDurationRowNum = 0;
-                            Row headerRowAvgDuration = avgDurationSheet.createRow(avgDurationRowNum++);
-                            headerRowAvgDuration.createCell(0).setCellValue("Nombre Cliente");
-                            headerRowAvgDuration.createCell(1).setCellValue("Duración Promedio (días)");
-                            for (Map.Entry<String, Double> entry : avgDurationByCustomer.entrySet()) {
-                                Row dataRowAvgDuration = avgDurationSheet.createRow(avgDurationRowNum++);
-                                dataRowAvgDuration.createCell(0).setCellValue(entry.getKey());
-                                dataRowAvgDuration.createCell(1).setCellValue(String.format("%.2f", entry.getValue()));
-                            }
+                        // Autoajuste para la hoja de top clientes
+                        for (int i = 0; i < headerRowTopCustomers.getLastCellNum(); i++) {
+                            topCustomersSheet.autoSizeColumn(i);
                         }
-                        break;
                     }
                     break;
-                case ReportingConstants.ReportType.GENERIC_METRICS:
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Métrica");
-                    row.createCell(1).setCellValue("Valor");
 
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Total de Alquileres");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("totalRentals")));
-
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Ingresos Totales");
-                    row.createCell(1).setCellValue(String.format("%.2f", data.get("totalRevenue")));
-
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Vehículos Únicos Alquilados");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("uniqueVehicles")));
-
-                    if (data.get("mostRentedVehicle") != null) {
-                        Map<String, Object> mostRentedVehicle = (Map<String, Object>) data.get("mostRentedVehicle");
-                        row = sheet.createRow(rowNum++);
-                        row.createCell(0).setCellValue("Vehículo Más Alquilado");
-                        row.createCell(1).setCellValue(mostRentedVehicle.get("brand") + " " + mostRentedVehicle.get("model") + " (" + mostRentedVehicle.get("rentalCount") + " veces)");
-                    }
-
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Nuevos Clientes");
-                    row.createCell(1).setCellValue(String.valueOf(data.get("newCustomers")));
-                    break;
                 default:
-                    row = sheet.createRow(rowNum++);
-                    row.createCell(0).setCellValue("Reporte de Excel no implementado para: " + reportType.getTitle());
+                    Row defaultRow = sheet.createRow(rowNum[0]++);
+                    createSafeCell(defaultRow, 0, "Reporte no implementado: " + reportType, dataStyle);
                     break;
             }
 
-            if (sheet.getPhysicalNumberOfRows() > 0) {
-                int lastCellNum = sheet.getRow(0).getLastCellNum();
-                for (int i = 0; i < lastCellNum; i++) {
+            // Autoajuste de columnas optimizado
+            if (sheet.getRow(0) != null) {
+                for (int i = 0; i < sheet.getRow(0).getLastCellNum(); i++) {
                     sheet.autoSizeColumn(i);
                 }
             }
 
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            return writeToBytes(workbook);
+
+        } catch (Exception e) {
+            logger.error("Error crítico generando reporte: {}", e.getMessage(), e);
+            throw new RuntimeException("Error generando reporte: " + e.getMessage(), e); // 4. Mejor manejo de errores
+        }
+    }
+
+    // 5. Método centralizado para escribir el archivo (Nuevo)
+    private byte[] writeToBytes(XSSFWorkbook workbook) throws IOException {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             workbook.write(outputStream);
             return outputStream.toByteArray();
+        }
+    }
 
-        } catch (IOException e) {
-            logger.error("Error al generar el reporte de Excel: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al generar el reporte de Excel", e);
-        } finally {
-            try {
-                workbook.close();
-            } catch (IOException e) {
-                logger.error("Error al cerrar el libro de Excel: {}", e.getMessage(), e);
+    // Mantener métodos originales con ajustes mínimos
+    @Override
+    public byte[] generateGenericTableExcel(List<String> headers, List<List<String>> data) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            XSSFSheet sheet = workbook.createSheet("Reporte");
+
+            XSSFCellStyle headerStyle = createHeaderStyle(workbook);
+            XSSFCellStyle dataStyle = createDataStyle(workbook);
+
+            // Cabeceras
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.size(); i++) {
+                createSafeCell(headerRow, i, headers.get(i), headerStyle);
             }
+
+            // Datos
+            if (data != null && !data.isEmpty()) {
+                for (int i = 0; i < data.size(); i++) {
+                    Row row = sheet.createRow(i + 1);
+                    List<String> rowData = data.get(i);
+                    for (int j = 0; j < rowData.size(); j++) {
+                        createSafeCell(row, j, rowData.get(j), dataStyle);
+                    }
+                }
+            }
+
+            // Autoajuste
+            for (int i = 0; i < headers.size(); i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            return writeToBytes(workbook);
+        } catch (IOException e) {
+            logger.error("Error generando tabla genérica: {}", e.getMessage(), e);
+            throw new RuntimeException("Error en tabla genérica: " + e.getMessage(), e);
         }
     }
 
     @Override
     public String getReportTitle(ReportingConstants.ReportType reportType) {
-        return reportType.getTitle() + " (Excel)";
+        return reportType.getTitle() + " - " + java.time.LocalDate.now();
     }
 }
