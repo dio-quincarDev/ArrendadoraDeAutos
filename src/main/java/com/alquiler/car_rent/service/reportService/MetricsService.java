@@ -11,27 +11,27 @@ public interface MetricsService {
     /**
      * Obtiene el total de alquileres en un período
      */
-    long getTotalRentals(LocalDate startDate, LocalDate endDate);
+    long getTotalRentals(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene el total de ingresos en un período
      */
-    double getTotalRevenue(LocalDate startDate, LocalDate endDate);
+    double getTotalRevenue(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene el número de vehículos únicos alquilados
      */
-    long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate);
+    long getUniqueVehiclesRented(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene información del vehículo más alquilado
      */
-    Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate);
+    Map<String, Object> getMostRentedVehicle(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene el número de nuevos clientes en un período
      */
-    long getNewCustomersCount(LocalDate startDate, LocalDate endDate);
+    long getNewCustomersCount(TimePeriod period,LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene las tendencias de alquileres por período
@@ -41,28 +41,28 @@ public interface MetricsService {
     /**
      * Obtiene el número de clientes únicos que realizaron al menos un alquiler en el período
      */
-    long getUniqueCustomersRented(LocalDate startDate, LocalDate endDate);
+    long getUniqueCustomersRented(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene la duración promedio de los alquileres en días
      */
-    double getAverageRentalDuration(LocalDate startDate, LocalDate endDate);
+    double getAverageRentalDuration(TimePeriod period, LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene el número de clientes activos (con al menos un alquiler) en el período
      */
-    long getActiveCustomersCount(LocalDate startDate, LocalDate endDate);
+    long getActiveCustomersCount(TimePeriod period,LocalDate startDate, LocalDate endDate);
 
     /**
      * Obtiene una lista de los 'limit' clientes que realizaron más alquileres
      */
-    List<Map<String, Object>> getTopCustomersByRentals(LocalDate startDate, LocalDate endDate, int limit);
+    List<Map<String, Object>> getTopCustomersByRentals(TimePeriod period,LocalDate startDate, LocalDate endDate, int limit);
 
     /**
      * Obtiene la duración promedio de los alquileres para una lista específica de IDs de clientes
      */
-    Map<String, Double> getAverageRentalDurationByCustomer(LocalDate startDate, LocalDate endDate, List<Long> customerIds);
+    Map<String, Double> getAverageRentalDurationByCustomer(TimePeriod period, LocalDate startDate, LocalDate endDate, List<Long> customerIds);
 
 
-    Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate);
+    Map<Vehicle, Long> getVehicleUsage(TimePeriod period, LocalDate startDate, LocalDate endDate);
 }

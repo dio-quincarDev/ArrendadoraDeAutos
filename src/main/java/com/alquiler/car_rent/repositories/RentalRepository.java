@@ -49,7 +49,8 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
     SELECT 
         FUNCTION('DATE_FORMAT', r.startDate, '%Y-%m') AS period,
-        COUNT(r) AS rentalCount 
+        COUNT(r) AS rentalCount,
+        SUM(r.totalPrice) AS totalRevenue 
     FROM Rental r 
     WHERE r.startDate <= :end AND r.endDate >= :start
     GROUP BY period 

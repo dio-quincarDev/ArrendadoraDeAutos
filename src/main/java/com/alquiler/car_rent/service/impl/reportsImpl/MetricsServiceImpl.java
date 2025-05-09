@@ -1,7 +1,6 @@
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
-import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.repositories.CustomerRepository;
@@ -38,10 +37,27 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     private Pair<LocalDateTime, LocalDateTime> getDateRange(LocalDate startDate, LocalDate endDate,
-                                                            ReportingConstants.TimePeriod defaultPeriod) {
-        LocalDate start = startDate != null ? startDate : LocalDate.now().minus(defaultPeriod.getValue(), defaultPeriod.getUnit());
-        LocalDate end = endDate != null ? endDate : LocalDate.now();
-        return Pair.of(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
+                                                            ReportingConstants.TimePeriod period) {
+        LocalDate start;
+        LocalDate end;
+        if(startDate != null) {
+        	start = startDate;
+        	logger.info("Usando startDate proporcionado: {}", start);
+        }else {
+        	start = LocalDate.now().minus(period.getValue(), period.getUnit());
+        	logger.info("Usando startDate por Defecto ({}) : {}", period, start);
+        }
+        if(endDate != null) {
+        	end = endDate;
+        	logger.info("Usando endDate proporcionado: {}", end);
+        }else {
+        	end = LocalDate.now();
+        	logger.info("Usando endaDare por Defect ({}) : {}", period, end);
+        }
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.plusDays(1).atStartOfDay();
+        logger.info("Rango de Fechas/hora calculado - Start: {}, End: {}", startDateTime, endDateTime);
+        return Pair.of(startDateTime, endDateTime);
     }
 
     private List<Rental> getRentalsInRange(LocalDateTime start, LocalDateTime end) {
@@ -56,20 +72,20 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
+    public long getTotalRentals(ReportingConstants.TimePeriod period,LocalDate startDate, LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
         return rentalRepository.countByDateRange(dateRange.getFirst(), dateRange.getSecond());
     }
 
     @Override
-    public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public double getTotalRevenue(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         return rentalRepository.getTotalRevenueInRange(dateRange.getFirst(), dateRange.getSecond());
     }
 
     @Override
-    public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public long getUniqueVehiclesRented(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .map(Rental::getVehicle)
                 .distinct()
@@ -77,8 +93,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public Map<String, Object> getMostRentedVehicle(ReportingConstants.TimePeriod period,LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
 
         // Usar la consulta optimizada del repositorio en lugar de la lógica manual
         List<Map<String,Object>> results = rentalRepository.findMostRentedVehicle(dateRange.getFirst(), dateRange.getSecond());
@@ -96,8 +112,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public long getNewCustomersCount(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public long getNewCustomersCount(ReportingConstants.TimePeriod period,  LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         return customerRepository.countByCreatedAtBetween(dateRange.getFirst(), dateRange.getSecond());
     }
 
@@ -115,10 +131,14 @@ public class MetricsServiceImpl implements MetricsService {
                 .map(entry -> {
                     String rawPeriod = (String) entry.get("period");
                     LocalDate date = LocalDate.parse(rawPeriod + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                    return Map.of(
-                            "period", date.format(formatter),
-                            "rentalCount", entry.get("rentalCount")
-                    );
+                    Map<String,Object> result = new LinkedHashMap<>();
+                    result.put("period", date.format(formatter));
+                    result.put("rentalCount", entry.get("rentalCount"));
+
+                            if (entry.containsKey("totalRevenue")){
+                                result.put("totalRevenue", entry.get("totalRevenue"));
+                    }
+                            return result;
                 })
                 .collect(Collectors.toList());
     }
@@ -134,8 +154,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public long getUniqueCustomersRented(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public long getUniqueCustomersRented(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         return getRentalsInRange(dateRange.getFirst(), dateRange.getSecond()).stream()
                 .map(Rental::getCustomer)
                 .distinct()
@@ -143,8 +163,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public double getAverageRentalDuration(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public double getAverageRentalDuration(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
         if (rentals.isEmpty()) return 0;
         long total = rentals.stream()
@@ -154,13 +174,13 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public long getActiveCustomersCount(LocalDate startDate, LocalDate endDate) {
-        return getUniqueCustomersRented(startDate, endDate);
+    public long getActiveCustomersCount(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        return getUniqueCustomersRented(period, endDate, startDate);
     }
 
     @Override
-    public List<Map<String, Object>> getTopCustomersByRentals(LocalDate startDate, LocalDate endDate, int limit) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public List<Map<String, Object>> getTopCustomersByRentals(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate, int limit) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
 
         // Usar la consulta optimizada del repositorio con paginación
         List<Object[]> topCustomers = rentalRepository.findTopCustomersByRentals(
@@ -196,8 +216,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public Map<String, Double> getAverageRentalDurationByCustomer(LocalDate startDate, LocalDate endDate, List<Long> customerIds) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public Map<String, Double> getAverageRentalDurationByCustomer(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate, List<Long> customerIds) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         return rentalRepository.findAverageDurationByCustomer(
                         dateRange.getFirst(),
                         dateRange.getSecond(),
@@ -210,8 +230,8 @@ public class MetricsServiceImpl implements MetricsService {
     }
 
     @Override
-    public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
+    public Map<Vehicle, Long> getVehicleUsage(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
 
         return rentalRepository.findVehicleUsage(
                         dateRange.getFirst(),

@@ -2,6 +2,7 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.exceptions.GlobalExceptionHandler;
 import com.alquiler.car_rent.service.reportService.PdfReportService;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -20,6 +21,8 @@ import java.util.Map;
 @Service
 public class PdfReportServiceImpl implements PdfReportService {
 
+    private final GlobalExceptionHandler globalExceptionHandler;
+
     private static final Logger logger = LoggerFactory.getLogger(PdfReportServiceImpl.class);
     private static final Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
     private static final Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
@@ -27,6 +30,10 @@ public class PdfReportServiceImpl implements PdfReportService {
     private static final Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
     private static final Font italicFont = new Font(Font.FontFamily.HELVETICA, 10, Font.ITALIC);
     private static final BaseColor headerBackgroundColor = BaseColor.LIGHT_GRAY;
+
+    PdfReportServiceImpl(GlobalExceptionHandler globalExceptionHandler) {
+        this.globalExceptionHandler = globalExceptionHandler;
+    }
 
     @Override
     public void addPdfHeader(Document doc, ReportingConstants.ReportType type, Map<String, Object> data) {
@@ -115,7 +122,7 @@ public class PdfReportServiceImpl implements PdfReportService {
         doc.add(new Paragraph("Clientes \u00danicos que Alquilaron: ", boldFont));
         doc.add(new Paragraph(data.get("uniqueCustomers").toString(), normalFont));
         doc.add(new Paragraph("Duraci\u00f3n Promedio de Alquiler: ", boldFont));
-        doc.add(new Paragraph(String.format("%.2f", data.get("averageRentalDuration")) + " d\u00edas", normalFont));
+        doc.add(new Paragraph(String.format("%d", (Long)  data.get("averageRentalDuration")) + " d\u00edas", normalFont));
         Map<String, Object> mostRented = (Map<String, Object>) data.get("mostRentedVehicle");
         if (mostRented != null) {
             doc.add(new Paragraph("Veh\u00edculo M\u00e1s Alquilado: ", boldFont));
@@ -131,8 +138,8 @@ public class PdfReportServiceImpl implements PdfReportService {
         doc.add(new Paragraph("Ingresos Totales por Alquileres: ", boldFont));
         doc.add(new Paragraph("$" + String.format("%.2f", data.get("totalRevenue")), normalFont));
         if (data.containsKey("totalRevenue") && data.get("totalRevenue") instanceof Number &&
-                data.containsKey("totalRentals") && data.get("totalRentals") instanceof Number &&
-                ((Number) data.get("totalRentals")).longValue() > 0) {
+            data.containsKey("totalRentals") && data.get("totalRentals") instanceof Number &&
+            ((Number) data.get("totalRentals")).longValue() > 0) {
             doc.add(new Paragraph("Ingresos Promedio por Alquiler: ", boldFont));
             doc.add(new Paragraph("$" + String.format("%.2f", ((Number) data.get("totalRevenue")).doubleValue() / ((Number) data.get("totalRentals")).doubleValue()), normalFont));
         }
@@ -166,11 +173,9 @@ public class PdfReportServiceImpl implements PdfReportService {
             doc.add(new Paragraph("Clientes con Mayor Actividad:", headerFont));
             PdfPTable table = new PdfPTable(3);
             table.setWidthPercentage(100);
-            addTableHeader(table, "ID Cliente");
             addTableHeader(table, "Nombre Cliente");
             addTableHeader(table, "Cantidad de Alquileres");
             for (Map<String, Object> customer : topCustomers) {
-                table.addCell(new Phrase(String.valueOf(customer.get("customerId")), normalFont));
                 table.addCell(new Phrase(String.valueOf(customer.get("name")), normalFont));
                 table.addCell(new Phrase(String.valueOf(customer.get("rentalCount")), normalFont));
             }
@@ -192,20 +197,25 @@ public class PdfReportServiceImpl implements PdfReportService {
     }
 
     private void addMostRentedVehiclesTable(Document doc, Map<String, Object> data) throws DocumentException {
-        Map<Vehicle, Long> rentalCounts = (Map<Vehicle, Long>) data.get("rentalCountsByVehicle");
-        if (rentalCounts != null && !rentalCounts.isEmpty()) {
-            doc.add(new Paragraph("Veh\u00edculos M\u00e1s Alquilados:", headerFont));
+        Map<String, Object> mostRented = (Map<String, Object>) data.get("mostRentedVehicle");
+        if (mostRented != null && !mostRented.isEmpty()) {
+            doc.add(new Paragraph("Veh\u00edculo M\u00e1s Alquilado:", headerFont));
             PdfPTable table = new PdfPTable(2);
             table.setWidthPercentage(100);
             addTableHeader(table, "Veh\u00edculo");
             addTableHeader(table, "Cantidad de Alquileres");
-            rentalCounts.entrySet().stream()
-                    .sorted(Map.Entry.<Vehicle, Long>comparingByValue().reversed())
-                    .forEach(entry -> {
-                        table.addCell(new Phrase(entry.getKey().getBrand() + " " + entry.getKey().getModel(), normalFont));
-                        table.addCell(new Phrase(String.valueOf(entry.getValue()), normalFont));
-                    });
-            doc.add(table);
+
+            String brand = (String) mostRented.get("brand");
+            String model = (String) mostRented.get("model");
+            Integer rentalCount = (Integer) mostRented.get("rentalCount");
+
+            if (brand != null && model != null && rentalCount != null) {
+                table.addCell(new Phrase(brand + " " + model, normalFont));
+                table.addCell(new Phrase(String.valueOf(rentalCount), normalFont));
+                doc.add(table);
+            } else {
+                doc.add(new Paragraph("No se encontraron detalles del vehículo más alquilado.", normalFont));
+            }
         } else {
             doc.add(new Paragraph("No hay datos disponibles para los veh\u00edculos m\u00e1s alquilados.", normalFont));
         }
