@@ -1,9 +1,8 @@
-// src/main/java/com/alquiler/car_rent/service/impl/reportsImpl/ReportDataServiceImpl.java
+
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Rental;
-import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.reportService.ExcelReportService;
 import com.alquiler.car_rent.service.reportService.MetricsService;
@@ -49,8 +48,17 @@ public class ReportDataServiceImpl implements ReportDataService {
                                                   LocalDate endDate) {
         logger.info("Generando datos del reporte para el período: {}, startDate: {}, endDate: {}", timePeriod, startDate, endDate);
 
-        LocalDate start = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(timePeriod.getValue(), timePeriod.getUnit()));
-        LocalDate end = Optional.ofNullable(endDate).orElse(LocalDate.now());
+        LocalDate start;
+        LocalDate end;
+
+        if (timePeriod != null) {
+            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(timePeriod.getValue(), timePeriod.getUnit()));
+            end = Optional.ofNullable(endDate).orElse(LocalDate.now());
+        } else {
+            // Lógica por defecto cuando timePeriod es null
+            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minusMonths(1)); // Ejemplo: Último mes
+            end = Optional.ofNullable(endDate).orElse(LocalDate.now());
+        }
 
         Pair<LocalDateTime, LocalDateTime> dateRange = Pair.of(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
         List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());

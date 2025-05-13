@@ -5,8 +5,12 @@ import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.controllers.ReportingApi;
 import com.alquiler.car_rent.service.reportService.ReportingService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -16,9 +20,28 @@ import java.util.Map;
 public class ReportingController implements ReportingApi {
 
     private final ReportingService reportingService;
+    private final ObjectMapper objectMapper; // Inject ObjectMapper
 
-    public ReportingController(ReportingService reportingService) {
+    public ReportingController(ReportingService reportingService, ObjectMapper objectMapper) {
         this.reportingService = reportingService;
+        this.objectMapper = objectMapper;
+    }
+
+    private Map<String, Object> getGenericReportData(LocalDate startDate, LocalDate endDate, ReportingConstants.TimePeriod period) {
+        byte[] reportBytes = reportingService.generateReport(
+                ReportingConstants.OutputFormat.JSON,
+                ReportingConstants.ReportType.GENERIC_METRICS,
+                period,
+                startDate,
+                endDate
+        );
+        try {
+            return objectMapper.readValue(reportBytes, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException e) {
+            // Manejar la excepción apropiadamente
+            e.printStackTrace();
+            return null; // O lanzar una excepción
+        }
     }
 
     @Override
@@ -98,39 +121,52 @@ public class ReportingController implements ReportingApi {
 
     @Override
     public ResponseEntity<Long> getTotalRentalsMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getTotalRentals(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        Long totalRentals = (Long) reportData.get("totalRentals");
+        return ResponseEntity.ok(totalRentals);
     }
 
     @Override
     public ResponseEntity<Double> getTotalRevenueMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getTotalRevenue(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        Double totalRevenue = (Double) reportData.get("totalRevenue");
+        return ResponseEntity.ok(totalRevenue);
     }
 
     @Override
     public ResponseEntity<Long> getUniqueVehiclesRentedMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getUniqueVehiclesRented(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        Long uniqueVehicles = (Long) reportData.get("uniqueVehicles");
+        return ResponseEntity.ok(uniqueVehicles);
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getMostRentedVehicle(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        return ResponseEntity.ok((Map<String, Object>) reportData.get("mostRentedVehicle"));
     }
 
     @Override
     public ResponseEntity<Long> getNewCustomersCountMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getNewCustomersCount(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        Long newCustomers = (Long) reportData.get("newCustomers");
+        return ResponseEntity.ok(newCustomers);
     }
 
     @Override
     public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(ReportingConstants.TimePeriod period,
                                                                            LocalDate startDate,
                                                                            LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getRentalTrends(period, startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) reportData.get("rentalTrends");
+        return ResponseEntity.ok(rentalTrends);
     }
 
     @Override
     public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(LocalDate startDate, LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.getVehicleUsage(startDate, endDate));
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+        Map<Vehicle, Long> vehicleUsage = (Map<Vehicle, Long>) reportData.get("vehicleUsage");
+        return ResponseEntity.ok(vehicleUsage);
     }
 
     @Override

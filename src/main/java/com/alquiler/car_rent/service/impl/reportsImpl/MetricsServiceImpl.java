@@ -38,24 +38,38 @@ public class MetricsServiceImpl implements MetricsService {
 
     private Pair<LocalDateTime, LocalDateTime> getDateRange(LocalDate startDate, LocalDate endDate,
                                                             ReportingConstants.TimePeriod period) {
-        LocalDate start;
-        LocalDate end;
-        if(startDate != null) {
-        	start = startDate;
-        	logger.info("Usando startDate proporcionado: {}", start);
-        }else {
-        	start = LocalDate.now().minus(period.getValue(), period.getUnit());
-        	logger.info("Usando startDate por Defecto ({}) : {}", period, start);
+        LocalDateTime startDateTime;
+        LocalDateTime endDateTime;
+
+        if (period == null) {
+            logger.info("Calculando rango de fechas para 'Total'.");
+            startDateTime = LocalDateTime.MIN;
+            endDateTime = LocalDateTime.MAX;
+        } else {
+            LocalDate start;
+            LocalDate end;
+            if (startDate != null) {
+                start = startDate;
+                logger.info("Usando startDate proporcionado: {}", start);
+            } else {
+                start = LocalDate.now().minus(period.getValue(), period.getUnit());
+                logger.info("Usando startDate por Defecto ({}) : {}", period, start);
+            }
+            if (endDate != null) {
+                end = endDate;
+                logger.info("Usando endDate proporcionado: {}", end);
+            } else {
+                end = LocalDate.now();
+                logger.info("Usando endDate por Defect ({}) : {}", period, end);
+            }
+
+            startDateTime = start.atStartOfDay();
+            endDateTime = end.plusDays(1).atStartOfDay();
         }
-        if(endDate != null) {
-        	end = endDate;
-        	logger.info("Usando endDate proporcionado: {}", end);
-        }else {
-        	end = LocalDate.now();
-        	logger.info("Usando endaDare por Defect ({}) : {}", period, end);
-        }
-        LocalDateTime startDateTime = start.atStartOfDay();
-        LocalDateTime endDateTime = end.plusDays(1).atStartOfDay();
+        // Añadir formateo explícito
+        DateTimeFormatter sqlFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        startDateTime = LocalDateTime.parse(startDateTime.format(sqlFormatter), sqlFormatter);
+        endDateTime = LocalDateTime.parse(endDateTime.format(sqlFormatter), sqlFormatter);
         logger.info("Rango de Fechas/hora calculado - Start: {}, End: {}", startDateTime, endDateTime);
         return Pair.of(startDateTime, endDateTime);
     }
