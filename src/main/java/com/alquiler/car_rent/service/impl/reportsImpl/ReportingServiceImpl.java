@@ -42,11 +42,11 @@ public class ReportingServiceImpl implements ReportingService {
         LocalDate resolvedStart;
         LocalDate resolvedEnd;
 
-        if (period != null) {
-            resolvedStart = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(period.getValue(), period.getUnit()));
-            resolvedEnd = Optional.ofNullable(endDate).orElse(LocalDate.now());
+        if (period == ReportingConstants.TimePeriod.ALL_TIME) {
+            resolvedStart = Optional.ofNullable(startDate).orElse(LocalDate.MIN); // O una fecha muy antigua
+            resolvedEnd = Optional.ofNullable(endDate).orElse(LocalDate.MAX);   // O una fecha muy futura
         } else {
-            resolvedStart = Optional.ofNullable(startDate).orElse(LocalDate.now().minusMonths(1)); // Lógica por defecto si period es null
+            resolvedStart = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(period.getValue(), period.getUnit()));
             resolvedEnd = Optional.ofNullable(endDate).orElse(LocalDate.now());
         }
         return reportDataService.generateReportData(period, resolvedStart, resolvedEnd);

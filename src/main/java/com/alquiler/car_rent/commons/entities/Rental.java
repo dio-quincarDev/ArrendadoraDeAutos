@@ -54,7 +54,6 @@ public class Rental {
 	private BigDecimal totalPrice;
 	
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
-
 	private LocalDateTime createdAt;
 	
 	@PrePersist

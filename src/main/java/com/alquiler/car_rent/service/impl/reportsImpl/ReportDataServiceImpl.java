@@ -51,20 +51,29 @@ public class ReportDataServiceImpl implements ReportDataService {
         LocalDate start;
         LocalDate end;
 
-        if (timePeriod != null) {
+        if (timePeriod == ReportingConstants.TimePeriod.ALL_TIME) {
+            // Usar un rango de fechas amplio pero razonable
+            start = Optional.ofNullable(startDate).orElse(LocalDate.of(1900, 1, 1));
+            end = Optional.ofNullable(endDate).orElse(LocalDate.of(2100, 1, 1));
+        } else if (timePeriod != null) {
             start = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(timePeriod.getValue(), timePeriod.getUnit()));
             end = Optional.ofNullable(endDate).orElse(LocalDate.now());
         } else {
             // Lógica por defecto cuando timePeriod es null
-            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minusMonths(1)); // Ejemplo: Último mes
+            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minusMonths(1));
             end = Optional.ofNullable(endDate).orElse(LocalDate.now());
         }
 
-        Pair<LocalDateTime, LocalDateTime> dateRange = Pair.of(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.atStartOfDay();
+        if (timePeriod != ReportingConstants.TimePeriod.ALL_TIME) {
+            endDateTime = endDateTime.plusDays(1);
+        }
+        Pair<LocalDateTime, LocalDateTime> dateRange = Pair.of(startDateTime, endDateTime);
         List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
 
         Map<String, Object> reportData = new HashMap<>();
-        reportData.put("period", timePeriod);
+        reportData.put("period", timePeriod != null ? timePeriod.name() : null);
         reportData.put("startDate", start);
         reportData.put("endDate", end);
 

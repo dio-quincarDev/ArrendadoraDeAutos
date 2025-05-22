@@ -3,21 +3,27 @@ package com.alquiler.car_rent.commons.constants;
 import java.time.temporal.ChronoUnit;
 
 public class ReportingConstants {
-    public static final int  PAGE_SIZE = 100;
+    public static final int PAGE_SIZE = 100;
 
     /**
-     * Períodos de tiempo para reportes y métricas
+     * Períodos de tiempo para reportes y métricas.
+     * <strong>Límite máximo:</strong> 12 meses.
      */
     public enum TimePeriod {
         MONTHLY(1, ChronoUnit.MONTHS),
         QUARTERLY(3, ChronoUnit.MONTHS),
         BIANNUAL(6, ChronoUnit.MONTHS),
-        ANNUAL(12, ChronoUnit.MONTHS);
+        ANNUAL(12, ChronoUnit.MONTHS),
+        ALL_TIME(0,null);
 
+        public static final int MAX_PERIOD_VALUE = 12;
         private final int value;
         private final ChronoUnit unit;
 
         TimePeriod(int value, ChronoUnit unit) {
+            if (value > MAX_PERIOD_VALUE) {
+                throw new IllegalArgumentException("El valor máximo permitido es " + MAX_PERIOD_VALUE);
+            }
             this.value = value;
             this.unit = unit;
         }
@@ -48,7 +54,7 @@ public class ReportingConstants {
         CUSTOMER_ACTIVITY("Actividad de Clientes"),
         MOST_RENTED_VEHICLES("Vehículos Más Alquilados"),
         RENTAL_TRENDS("Tendencias de Alquiler"),
-        GENERIC_METRICS("Metricas Generales");
+        GENERIC_METRICS("Métricas Generales");
 
         private final String title;
 
@@ -60,5 +66,4 @@ public class ReportingConstants {
             return title;
         }
     }
-
 }

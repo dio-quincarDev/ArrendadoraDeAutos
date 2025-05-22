@@ -9,6 +9,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -31,23 +33,22 @@ public class ReportingController implements ReportingApi {
         byte[] reportBytes = reportingService.generateReport(
                 ReportingConstants.OutputFormat.JSON,
                 ReportingConstants.ReportType.GENERIC_METRICS,
-                period,
+                period, // Using the passed period
                 startDate,
                 endDate
         );
         try {
             return objectMapper.readValue(reportBytes, new TypeReference<Map<String, Object>>() {});
         } catch (IOException e) {
-            // Manejar la excepción apropiadamente
             e.printStackTrace();
-            return null; // O lanzar una excepción
+            return null;
         }
     }
 
     @Override
     public ResponseEntity<Map<String, Object>> getDashboardData(ReportingConstants.TimePeriod period,
-                                                                LocalDate startDate,
-                                                                LocalDate endDate) {
+                                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(reportingService.generateReportData(period, startDate, endDate));
     }
 
@@ -55,8 +56,8 @@ public class ReportingController implements ReportingApi {
     public ResponseEntity<byte[]> exportReport(ReportingConstants.OutputFormat format,
                                                ReportingConstants.ReportType reportType,
                                                ReportingConstants.TimePeriod period,
-                                               LocalDate startDate,
-                                               LocalDate endDate) {
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         byte[] report = reportingService.generateReport(format, reportType, period, startDate, endDate);
 
@@ -70,11 +71,9 @@ public class ReportingController implements ReportingApi {
                                            ReportingConstants.TimePeriod period,
                                            LocalDate startDate,
                                            LocalDate endDate) {
-
         String filename = generateFilename(reportType, period, startDate, endDate);
         MediaType mediaType = getMediaType(format);
         String fileExtension = getFileExtension(format);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(mediaType);
         headers.setContentDisposition(ContentDisposition.builder(mediaType.equals(MediaType.APPLICATION_PDF) ? "attachment" : "inline")
@@ -86,14 +85,12 @@ public class ReportingController implements ReportingApi {
                                     ReportingConstants.TimePeriod period,
                                     LocalDate startDate,
                                     LocalDate endDate) {
-
         String dateRange = (startDate != null && endDate != null)
                 ? String.format("%s_%s", startDate, endDate)
                 : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
         return String.format("%s_%s_%s",
                 reportType.name().toLowerCase(),
-                period.name().toLowerCase(),
+                period != null ? period.name().toLowerCase() : "alltime", // Manejar null por si acaso
                 dateRange);
     }
 
@@ -120,51 +117,77 @@ public class ReportingController implements ReportingApi {
     }
 
     @Override
-    public ResponseEntity<Long> getTotalRentalsMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
-        Long totalRentals = (Long) reportData.get("totalRentals");
+    public ResponseEntity<Long> getTotalRentalsMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        Long totalRentals = ((Number) reportData.get("totalRentals")).longValue();
         return ResponseEntity.ok(totalRentals);
     }
 
     @Override
-    public ResponseEntity<Double> getTotalRevenueMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+    public ResponseEntity<Double> getTotalRevenueMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         Double totalRevenue = (Double) reportData.get("totalRevenue");
         return ResponseEntity.ok(totalRevenue);
     }
 
     @Override
-    public ResponseEntity<Long> getUniqueVehiclesRentedMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+    public ResponseEntity<Long> getUniqueVehiclesRentedMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         Long uniqueVehicles = (Long) reportData.get("uniqueVehicles");
         return ResponseEntity.ok(uniqueVehicles);
     }
 
     @Override
-    public ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+    public ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         return ResponseEntity.ok((Map<String, Object>) reportData.get("mostRentedVehicle"));
     }
 
     @Override
-    public ResponseEntity<Long> getNewCustomersCountMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
-        Long newCustomers = (Long) reportData.get("newCustomers");
+    public ResponseEntity<Long> getNewCustomersCountMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        Long newCustomers = ((Number) reportData.get("newCustomers")).longValue();
         return ResponseEntity.ok(newCustomers);
     }
 
     @Override
-    public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(ReportingConstants.TimePeriod period,
-                                                                           LocalDate startDate,
-                                                                           LocalDate endDate) {
+    public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
+            @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
         Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) reportData.get("rentalTrends");
         return ResponseEntity.ok(rentalTrends);
     }
 
     @Override
-    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, null);
+    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         Map<Vehicle, Long> vehicleUsage = (Map<Vehicle, Long>) reportData.get("vehicleUsage");
         return ResponseEntity.ok(vehicleUsage);
     }

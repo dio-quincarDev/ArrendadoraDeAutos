@@ -28,6 +28,9 @@ public class MetricsServiceImpl implements MetricsService {
     private final RentalRepository rentalRepository;
     private final CustomerRepository customerRepository;
 
+    private static final LocalDateTime SAFE_MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
+    private static final LocalDateTime SAFE_MAX_DATE = LocalDateTime.of(2150, 1, 1, 0, 0);
+
     @Value("${reporting.page.size:100}")
     private int pageSize;
 
@@ -35,16 +38,15 @@ public class MetricsServiceImpl implements MetricsService {
         this.rentalRepository = rentalRepository;
         this.customerRepository = customerRepository;
     }
-
     private Pair<LocalDateTime, LocalDateTime> getDateRange(LocalDate startDate, LocalDate endDate,
                                                             ReportingConstants.TimePeriod period) {
         LocalDateTime startDateTime;
         LocalDateTime endDateTime;
 
-        if (period == null) {
-            logger.info("Calculando rango de fechas para 'Total'.");
-            startDateTime = LocalDateTime.MIN;
-            endDateTime = LocalDateTime.MAX;
+        if (period == null || period.name().equals("ALL_TIME")) {
+            logger.info("Calculando rango de fechas seguro para 'ALL_TIME'.");
+            startDateTime = SAFE_MIN_DATE;
+            endDateTime = SAFE_MAX_DATE;
         } else {
             LocalDate start;
             LocalDate end;
@@ -60,19 +62,17 @@ public class MetricsServiceImpl implements MetricsService {
                 logger.info("Usando endDate proporcionado: {}", end);
             } else {
                 end = LocalDate.now();
-                logger.info("Usando endDate por Defect ({}) : {}", period, end);
+                logger.info("Usando endDate por Defecto ({}) : {}", period, end);
             }
 
             startDateTime = start.atStartOfDay();
             endDateTime = end.plusDays(1).atStartOfDay();
         }
-        // Añadir formateo explícito
-        DateTimeFormatter sqlFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        startDateTime = LocalDateTime.parse(startDateTime.format(sqlFormatter), sqlFormatter);
-        endDateTime = LocalDateTime.parse(endDateTime.format(sqlFormatter), sqlFormatter);
+
         logger.info("Rango de Fechas/hora calculado - Start: {}, End: {}", startDateTime, endDateTime);
         return Pair.of(startDateTime, endDateTime);
     }
+
 
     private List<Rental> getRentalsInRange(LocalDateTime start, LocalDateTime end) {
         int pageNum = 0;
@@ -87,8 +87,9 @@ public class MetricsServiceImpl implements MetricsService {
 
     @Override
     public long getTotalRentals(ReportingConstants.TimePeriod period,LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, ReportingConstants.TimePeriod.MONTHLY);
-        return rentalRepository.countByDateRange(dateRange.getFirst(), dateRange.getSecond());
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+        Number countResult = rentalRepository.countByDateRange(dateRange.getFirst(), dateRange.getSecond());
+        return countResult.longValue();
     }
 
     @Override
@@ -121,7 +122,7 @@ public class MetricsServiceImpl implements MetricsService {
         return Map.of(
                 "brand", mostRented.get("brand"),
                 "model", mostRented.get("model"),
-                "rentalCount", mostRented.get("rentalCount")
+                "rentalCount", ((Number) mostRented.get("rentalCount")).longValue()
         );
     }
 
@@ -215,10 +216,9 @@ public class MetricsServiceImpl implements MetricsService {
                             secondElement != null ? secondElement.getClass().getName() : null,
                             thirdElement != null ? thirdElement.getClass().getName() : null);
 
-
+                    Long customerId = ((Number) entry[0]).longValue();
                     String name = (String) entry[1];
-                    Long customerId = (Long) entry[0];
-                    Long rentalCount = (Long) entry[2];
+                    Long rentalCount = ((Number) entry[2]).longValue();
 
                     Map<String, Object> customerMap = new HashMap<>();
                     customerMap.put("customerId", customerId);
@@ -255,7 +255,7 @@ public class MetricsServiceImpl implements MetricsService {
                         entry -> {
                             // Construye un Vehicle temporal solo con los datos necesarios
                             Vehicle vehicle = new Vehicle();
-                            vehicle.setId((Long) entry.get("vehicleId"));
+                            vehicle.setId(((Number) entry.get("vehicleId")).longValue());
                             vehicle.setBrand((String) entry.get("brand"));
                             vehicle.setModel((String) entry.get("model"));
                             return vehicle;
