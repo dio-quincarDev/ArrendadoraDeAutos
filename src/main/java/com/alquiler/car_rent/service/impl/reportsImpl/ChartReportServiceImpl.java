@@ -182,6 +182,37 @@ public class ChartReportServiceImpl implements ChartReportService {
                     }
                     return null;
 
+                case AVERAGE_RENTAL_DURATION:
+                    DefaultCategoryDataset durationDataset = new DefaultCategoryDataset();
+                    Map<String, Double> avgDurationByCustomer = (Map<String, Double>) data.get("averageRentalDurationByTopCustomers");
+                    if (avgDurationByCustomer != null) {
+                        avgDurationByCustomer.forEach((customer, days) -> durationDataset.addValue(days, "Días Promedio", customer));
+                        JFreeChart chart = ChartFactory.createBarChart(
+                                "Duración Promedio de Alquiler por Cliente", "Cliente", "Días Promedio", durationDataset);
+                        CategoryPlot plot = chart.getCategoryPlot();
+                        ((BarRenderer) plot.getRenderer()).setDefaultItemLabelsVisible(true);
+                        plot.setOrientation(PlotOrientation.HORIZONTAL);
+                        return chart;
+                    }
+                    return null;
+
+                case TOP_CUSTOMERS_BY_RENTALS:
+                    DefaultCategoryDataset customerDataset = new DefaultCategoryDataset();
+                    List<Map<String, Object>> topCustomers = (List<Map<String, Object>>) data.get("topCustomersByRentals");
+                    if (topCustomers != null) {
+                        topCustomers.forEach(entry -> {
+                            String customer = (String) entry.get("name");
+                            Number rentalCount = (Number) entry.get("rentalCount");
+                            customerDataset.addValue(rentalCount, "Alquileres", customer);
+                        });
+                        JFreeChart chart = ChartFactory.createBarChart(
+                                "Clientes más frecuentes en alquileres", "Cliente", "Cantidad de Alquileres", customerDataset);
+                        CategoryPlot plot = chart.getCategoryPlot();
+                        ((BarRenderer) plot.getRenderer()).setDefaultItemLabelsVisible(true);
+                        return chart;
+                    }
+                    return null;
+
                 case RENTAL_SUMMARY:
                     DefaultCategoryDataset rentalSummaryDataset = new DefaultCategoryDataset();
                     Long totalRentals = (Long) data.get("totalRentals");

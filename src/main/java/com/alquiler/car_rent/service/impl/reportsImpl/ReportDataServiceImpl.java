@@ -3,6 +3,7 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Rental;
+import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.reportService.ExcelReportService;
 import com.alquiler.car_rent.service.reportService.MetricsService;
@@ -48,27 +49,27 @@ public class ReportDataServiceImpl implements ReportDataService {
                                                   LocalDate endDate) {
         logger.info("Generando datos del reporte para el período: {}, startDate: {}, endDate: {}", timePeriod, startDate, endDate);
 
+        // Rango seguro: años válidos de 1900 a 2150
+        LocalDate safeStart = LocalDate.of(1900, 1, 1);
+        LocalDate safeEnd = LocalDate.of(2150, 1, 1);
+
         LocalDate start;
         LocalDate end;
 
         if (timePeriod == ReportingConstants.TimePeriod.ALL_TIME) {
-            // Usar un rango de fechas amplio pero razonable
-            start = Optional.ofNullable(startDate).orElse(LocalDate.of(1900, 1, 1));
-            end = Optional.ofNullable(endDate).orElse(LocalDate.of(2100, 1, 1));
+            start = (startDate != null && isSafeYear(startDate)) ? startDate : safeStart;
+            end = (endDate != null && isSafeYear(endDate)) ? endDate : safeEnd;
         } else if (timePeriod != null) {
-            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minus(timePeriod.getValue(), timePeriod.getUnit()));
-            end = Optional.ofNullable(endDate).orElse(LocalDate.now());
+            start = (startDate != null && isSafeYear(startDate)) ? startDate : LocalDate.now().minus(timePeriod.getValue(), timePeriod.getUnit());
+            end = (endDate != null && isSafeYear(endDate)) ? endDate : LocalDate.now();
         } else {
-            // Lógica por defecto cuando timePeriod es null
-            start = Optional.ofNullable(startDate).orElse(LocalDate.now().minusMonths(1));
-            end = Optional.ofNullable(endDate).orElse(LocalDate.now());
+            start = (startDate != null && isSafeYear(startDate)) ? startDate : LocalDate.now().minusMonths(1);
+            end = (endDate != null && isSafeYear(endDate)) ? endDate : LocalDate.now();
         }
 
         LocalDateTime startDateTime = start.atStartOfDay();
-        LocalDateTime endDateTime = end.atStartOfDay();
-        if (timePeriod != ReportingConstants.TimePeriod.ALL_TIME) {
-            endDateTime = endDateTime.plusDays(1);
-        }
+        LocalDateTime endDateTime = end.plusDays(1).atStartOfDay(); // Inclusivo
+
         Pair<LocalDateTime, LocalDateTime> dateRange = Pair.of(startDateTime, endDateTime);
         List<Rental> rentals = getRentalsInRange(dateRange.getFirst(), dateRange.getSecond());
 
@@ -85,6 +86,12 @@ public class ReportDataServiceImpl implements ReportDataService {
         return reportData;
     }
 
+    private boolean isSafeYear(LocalDate date) {
+        int year = date.getYear();
+        return year >= 1900 && year <= 2150;
+    }
+
+
     private void addBasicMetrics(Map<String, Object> reportData, List<Rental> rentals) {
         reportData.put("totalRentals", rentals.size());
         reportData.put("totalRevenue", calculateTotalRevenue(rentals));
@@ -100,6 +107,7 @@ public class ReportDataServiceImpl implements ReportDataService {
         reportData.put("uniqueCustomers", metricsService.getUniqueCustomersRented(period, start, end));
         reportData.put("activeCustomers", metricsService.getActiveCustomersCount(period, start, end));
         reportData.put("newCustomers", metricsService.getNewCustomersCount(period, start, end));
+        reportData.put("customerActivity",metricsService.getCustomerActivity(period, start, end));
 
         List<Map<String, Object>> topCustomers = metricsService.getTopCustomersByRentals(period, start, end, DEFAULT_TOP_CUSTOMERS_LIMIT);
         List<Map<String, Object>> topCustomersSanitized = topCustomers.stream()
@@ -122,7 +130,18 @@ public class ReportDataServiceImpl implements ReportDataService {
     }
 
     private void addVehicleMetrics(Map<String, Object> reportData, ReportingConstants.TimePeriod period, LocalDate start, LocalDate end) {
-        reportData.put("vehicleUsage", metricsService.getVehicleUsage(period, start, end));
+        Map<Vehicle, Long> rawUsage = metricsService.getVehicleUsage(period, start, end);
+
+        List<Map<String, Object>> usageList = rawUsage.entrySet().stream()
+            .map(entry -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("vehicle", entry.getKey().getBrand() + " " + entry.getKey().getModel());
+                map.put("count", entry.getValue());
+                return map;
+            })
+            .collect(Collectors.toList());
+
+        reportData.put("vehicleUsage", usageList);
         reportData.put("mostRentedVehicle", metricsService.getMostRentedVehicle(period, start, end));
     }
 

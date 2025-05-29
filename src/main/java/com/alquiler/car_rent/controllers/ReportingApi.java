@@ -93,4 +93,20 @@ public interface ReportingApi {
     @PostMapping("/export-metrics")
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<byte[]> exportMetrics(@RequestBody ExportMetricsRequest request);
+
+    @GetMapping("/metrics/average-rental-duration")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<Map<String, Double>> getAverageRentalDurationMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    );
+
+    @GetMapping("/metrics/top-customers")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<List<Map<String, Object>>> getTopCustomersMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    );
 }

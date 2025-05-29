@@ -54,7 +54,9 @@ public class ReportingConstants {
         CUSTOMER_ACTIVITY("Actividad de Clientes"),
         MOST_RENTED_VEHICLES("Vehículos Más Alquilados"),
         RENTAL_TRENDS("Tendencias de Alquiler"),
-        GENERIC_METRICS("Métricas Generales");
+        GENERIC_METRICS("Métricas Generales"),
+        TOP_CUSTOMERS_BY_RENTALS("Cliente con mas alquileres por periodo"),
+        AVERAGE_RENTAL_DURATION("Duracion Promedio de Alquiler");
 
         private final String title;
 

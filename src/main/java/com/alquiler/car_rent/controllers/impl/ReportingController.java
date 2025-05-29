@@ -46,11 +46,19 @@ public class ReportingController implements ReportingApi {
     }
 
     @Override
-    public ResponseEntity<Map<String, Object>> getDashboardData(ReportingConstants.TimePeriod period,
-                                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-                                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(reportingService.generateReportData(period, startDate, endDate));
+    public ResponseEntity<Map<String, Object>> getDashboardData(
+            ReportingConstants.TimePeriod period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        LocalDate safeStart = (startDate != null && startDate.isAfter(LocalDate.of(2024, 1, 1)))
+                ? startDate : LocalDate.of(1900, 1, 1);
+        LocalDate safeEnd = (endDate != null && endDate.isBefore(LocalDate.of(2035, 1, 1)))
+                ? endDate : LocalDate.of(2100, 1, 1);
+
+        return ResponseEntity.ok(reportingService.generateReportData(period, safeStart, safeEnd));
     }
+
 
     @Override
     public ResponseEntity<byte[]> exportReport(ReportingConstants.OutputFormat format,
@@ -205,5 +213,27 @@ public class ReportingController implements ReportingApi {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(bytes);
+    }
+
+    @Override
+    public ResponseEntity<Map<String, Double>> getAverageRentalDurationMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        Map<String, Double> avgDurationByCustomer = (Map<String, Double>) reportData.get("averageRentalDurationByTopCustomers");
+        return ResponseEntity.ok(avgDurationByCustomer);
+    }
+
+    @Override
+    public ResponseEntity<List<Map<String, Object>>> getTopCustomersMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        List<Map<String, Object>> topCustomers = (List<Map<String, Object>>) reportData.get("topCustomersByRentals");
+        return ResponseEntity.ok(topCustomers);
     }
 }

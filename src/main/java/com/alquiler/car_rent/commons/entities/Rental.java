@@ -61,6 +61,13 @@ public class Rental {
 		this.createdAt = LocalDateTime.now();
 		if(this.rentalStatus == null) {
 			this.rentalStatus = RentalStatus.PENDING;
+			// Asegurar que las fechas no sean LocalDateTime.MAX al persistir
+	        if (this.startDate != null && this.startDate.equals(LocalDateTime.MAX)) {
+	            this.startDate = LocalDateTime.parse("2100-12-31T23:59"); // Reemplazar con una fecha válida
+	        }
+	        if (this.endDate != null && this.endDate.equals(LocalDateTime.MAX)) {
+	            this.endDate = LocalDateTime.parse("2100-12-31T23:59"); // Reemplazar con una fecha válida
+	        }
 			
 		}
 	}

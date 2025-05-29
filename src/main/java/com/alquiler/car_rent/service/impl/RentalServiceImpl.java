@@ -54,10 +54,12 @@ public class RentalServiceImpl implements RentalService{
 
 	@Override
 	public RentalDto createRental(RentalDto rentalDto) {
-		if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
-			throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha final");
-		}
 		
+		if (rentalDto.getStartDate().toString().length() > 25 ||
+			    rentalDto.getEndDate().toString().length() > 25) {
+			  throw new IllegalArgumentException("Formato de fecha de alquiler no válido");
+			}
+
 		
 		Rental rental = rentalMapper.dtoToRental(rentalDto);
 		
@@ -91,9 +93,11 @@ public class RentalServiceImpl implements RentalService{
 		
 		return rentalRepository.findById(id)
                 .map(existingRental -> {
-                	 if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
-                         throw new InvalidRentalException("Fechas inválidas");
-                     }
+                	if (rentalDto.getStartDate().toString().length() > 25 ||
+                		    rentalDto.getEndDate().toString().length() > 25) {
+                		  throw new IllegalArgumentException("Formato de fecha de alquiler no válido");
+                		}
+
                     existingRental.setStartDate(rentalDto.getStartDate());
                     existingRental.setEndDate(rentalDto.getEndDate());
                     existingRental.setTotalPrice(rentalDto.getTotalPrice());

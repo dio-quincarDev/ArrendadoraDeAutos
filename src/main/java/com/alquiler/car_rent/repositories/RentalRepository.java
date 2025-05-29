@@ -121,16 +121,20 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
 
     // Para encontrar los principales clientes por número de alquileres
     @Query("""
-    SELECT c.id AS customerId, c.name AS name, COUNT(r) AS rentalCount 
-    FROM Rental r 
-    JOIN Customer c ON r.customer.id = c.id 
-    WHERE r.startDate <= :end AND r.endDate >= :start
-    GROUP BY c.id, c.name 
-    ORDER BY rentalCount DESC
-""")
-    List<Object[]> findTopCustomersByRentals(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            Pageable pageable
-    );
+    	    SELECT
+    	        c.id AS customerId,
+    	        c.name AS name,
+    	        COUNT(r) AS rentals,
+    	        SUM(r.totalPrice) AS revenue
+    	    FROM Rental r
+    	    JOIN r.customer c
+    	    WHERE r.startDate <= :end AND r.endDate >= :start
+    	    GROUP BY c.id, c.name
+    	    ORDER BY rentals DESC
+    	""")
+    	List<Object[]> findTopCustomersByRentals(
+    	        @Param("start") LocalDateTime start,
+    	        @Param("end") LocalDateTime end,
+    	        Pageable pageable
+    	);
 }

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -124,6 +125,27 @@ public class MetricsServiceImpl implements MetricsService {
                 "model", mostRented.get("model"),
                 "rentalCount", ((Number) mostRented.get("rentalCount")).longValue()
         );
+    }
+    
+    @Override
+    public Map<Vehicle, Long> getVehicleUsage(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+
+        return rentalRepository.findVehicleUsage(
+                        dateRange.getFirst(),
+                        dateRange.getSecond()
+                ).stream()
+                .collect(Collectors.toMap(
+                        entry -> {
+                            // Construye un Vehicle temporal solo con los datos necesarios
+                            Vehicle vehicle = new Vehicle();
+                            vehicle.setId(((Number) entry.get("vehicleId")).longValue());
+                            vehicle.setBrand((String) entry.get("brand"));
+                            vehicle.setModel((String) entry.get("model"));
+                            return vehicle;
+                        },
+                        entry -> (Long) entry.get("usageCount")
+                ));
     }
 
     @Override
@@ -242,25 +264,34 @@ public class MetricsServiceImpl implements MetricsService {
                         arr -> (Double) arr[1]
                 ));
     }
-
+    
     @Override
-    public Map<Vehicle, Long> getVehicleUsage(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
-        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+    public List<Map<String, Object>>getCustomerActivity(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate){
+      LocalDateTime start;
+      LocalDateTime end;
+      
+      if(period == ReportingConstants.TimePeriod.ALL_TIME) {
+    	  start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
+    	  end = endDate != null ? endDate.plusDays(1).atStartOfDay() : LocalDateTime.of(2150, 1, 1, 0, 0);
 
-        return rentalRepository.findVehicleUsage(
-                        dateRange.getFirst(),
-                        dateRange.getSecond()
-                ).stream()
-                .collect(Collectors.toMap(
-                        entry -> {
-                            // Construye un Vehicle temporal solo con los datos necesarios
-                            Vehicle vehicle = new Vehicle();
-                            vehicle.setId(((Number) entry.get("vehicleId")).longValue());
-                            vehicle.setBrand((String) entry.get("brand"));
-                            vehicle.setModel((String) entry.get("model"));
-                            return vehicle;
-                        },
-                        entry -> (Long) entry.get("usageCount")
-                ));
+    	} else {
+    		start = startDate != null ? startDate.atStartOfDay() : LocalDate.now().minus(period.getValue(), period.getUnit()).atStartOfDay();
+    		end = endDate != null ? endDate.plusDays(1).atStartOfDay() : LocalDate.now().plusDays(1).atStartOfDay();	
+    	}
+      List<Object[]> results = rentalRepository.findTopCustomersByRentals(start, end, Pageable.unpaged());
+      List<Map<String, Object>> customerActivityList = new ArrayList<>();
+      
+      for (Object[] result : results) {
+    	  Map<String, Object> customerData = new HashMap<>();
+    	  customerData.put("name", result[1]);
+    	  customerData.put("rentals", result[2]);
+    	  customerData.put("revenue", result[3]);
+    	  
+    	  customerActivityList.add(customerData);
+      }
+      
+      return customerActivityList;
+      
     }
+   
 }
