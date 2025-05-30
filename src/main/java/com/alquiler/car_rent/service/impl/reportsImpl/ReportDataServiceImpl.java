@@ -143,6 +143,8 @@ public class ReportDataServiceImpl implements ReportDataService {
 
         reportData.put("vehicleUsage", usageList);
         reportData.put("mostRentedVehicle", metricsService.getMostRentedVehicle(period, start, end));
+        reportData.put("availableVehicles", metricsService.getAvailableVehiclesCount());
+
     }
 
     private void addTrendsAndAdvancedMetrics(Map<String, Object> reportData, ReportingConstants.TimePeriod period, LocalDate start, LocalDate end) {

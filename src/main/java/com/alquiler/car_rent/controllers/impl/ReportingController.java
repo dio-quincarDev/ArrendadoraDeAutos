@@ -165,6 +165,18 @@ public class ReportingController implements ReportingApi {
     ) {
         Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         return ResponseEntity.ok((Map<String, Object>) reportData.get("mostRentedVehicle"));
+        
+    }
+    
+    @Override
+    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ) {
+        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
+        Map<Vehicle, Long> vehicleUsage = (Map<Vehicle, Long>) reportData.get("vehicleUsage");
+        return ResponseEntity.ok(vehicleUsage);
     }
 
     @Override
@@ -189,16 +201,6 @@ public class ReportingController implements ReportingApi {
         return ResponseEntity.ok(rentalTrends);
     }
 
-    @Override
-    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
-            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
-    ) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
-        Map<Vehicle, Long> vehicleUsage = (Map<Vehicle, Long>) reportData.get("vehicleUsage");
-        return ResponseEntity.ok(vehicleUsage);
-    }
 
     @Override
     public ResponseEntity<byte[]> exportMetrics(ExportMetricsRequest request) {

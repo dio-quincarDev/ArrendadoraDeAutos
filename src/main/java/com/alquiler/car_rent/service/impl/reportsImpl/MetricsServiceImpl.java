@@ -3,8 +3,10 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
+import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.reportService.MetricsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,7 @@ public class MetricsServiceImpl implements MetricsService {
 
     private final RentalRepository rentalRepository;
     private final CustomerRepository customerRepository;
+    private final VehicleRepository vehicleRepository;
 
     private static final LocalDateTime SAFE_MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
     private static final LocalDateTime SAFE_MAX_DATE = LocalDateTime.of(2150, 1, 1, 0, 0);
@@ -35,9 +38,11 @@ public class MetricsServiceImpl implements MetricsService {
     @Value("${reporting.page.size:100}")
     private int pageSize;
 
-    public MetricsServiceImpl(RentalRepository rentalRepository, CustomerRepository customerRepository) {
+    public MetricsServiceImpl(RentalRepository rentalRepository, CustomerRepository customerRepository,
+    		VehicleRepository vehicleRepository) {
         this.rentalRepository = rentalRepository;
         this.customerRepository = customerRepository;
+        this.vehicleRepository = vehicleRepository;
     }
     private Pair<LocalDateTime, LocalDateTime> getDateRange(LocalDate startDate, LocalDate endDate,
                                                             ReportingConstants.TimePeriod period) {
@@ -293,5 +298,10 @@ public class MetricsServiceImpl implements MetricsService {
       return customerActivityList;
       
     }
+	@Override
+	public long getAvailableVehiclesCount() {
+		return vehicleRepository.findByStatus(VehicleStatus.AVAILABLE).size();
+	
+	}
    
 }

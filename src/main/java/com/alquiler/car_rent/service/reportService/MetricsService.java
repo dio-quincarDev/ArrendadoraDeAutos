@@ -65,6 +65,9 @@ public interface MetricsService {
 
 
     Map<Vehicle, Long> getVehicleUsage(TimePeriod period, LocalDate startDate, LocalDate endDate);
+    
+    long getAvailableVehiclesCount();
+
 
     
 	List<Map<String, Object>> getCustomerActivity(TimePeriod period, LocalDate startDate, LocalDate endDate);
