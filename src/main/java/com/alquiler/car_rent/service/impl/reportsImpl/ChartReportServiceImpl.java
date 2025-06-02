@@ -5,6 +5,7 @@ import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.ChartReportService;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.jfree.chart.*;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.chart.renderer.xy.*;
@@ -134,15 +135,38 @@ public class ChartReportServiceImpl implements ChartReportService {
                     DefaultCategoryDataset lineDataset = new DefaultCategoryDataset();
                     List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) data.get("rentalTrends");
                     if (rentalTrends != null) {
-                        rentalTrends.forEach(trend -> {
+                        for (Map<String, Object> trend : rentalTrends) {
                             String period = (String) trend.get("period");
                             Number rentalCount = (Number) trend.get("rentalCount");
+                            Number totalRevenue = (Number) trend.get("totalRevenue");
+                            
                             lineDataset.addValue(rentalCount, "Alquileres", period);
-                        });
+                            lineDataset.addValue(totalRevenue, "Ingresos", period);
+                        }
+                        
                         JFreeChart chart = ChartFactory.createLineChart(
-                                "Tendencias de Alquileres", "Período", "Cantidad de Alquileres", lineDataset);
+                            "Tendencias de Alquileres", 
+                            "Período", 
+                            "Cantidad", 
+                            lineDataset
+                        );
+                        
+                        // CORRECCIÓN: Obtener el plot del chart
                         CategoryPlot plot = chart.getCategoryPlot();
-                        ((LineAndShapeRenderer) plot.getRenderer()).setDefaultShapesVisible(true);
+                        
+                        // Configurar eje secundario para ingresos
+                        NumberAxis revenueAxis = new NumberAxis("Ingresos ($)");
+                        revenueAxis.setAutoRangeIncludesZero(false);
+                        plot.setRangeAxis(1, revenueAxis);
+                        
+                        // Mapear la segunda serie al eje secundario
+                        plot.mapDatasetToRangeAxis(1, 1);
+                        
+                        // Personalizar colores
+                        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+                        renderer.setSeriesPaint(0, Color.BLUE);   // Alquileres
+                        renderer.setSeriesPaint(1, Color.GREEN);  // Ingresos
+                        
                         return chart;
                     }
                     return null;

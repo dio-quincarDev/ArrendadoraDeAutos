@@ -161,20 +161,19 @@ public class MetricsServiceImpl implements MetricsService {
 
     @Override
     public List<Map<String, Object>> getRentalTrends(ReportingConstants.TimePeriod period,
-                                                     LocalDate startDate,
-                                                     LocalDate endDate) {
+                                                         LocalDate startDate,
+                                                         LocalDate endDate) {
         Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
         List<Map<String, Object>> trendsData = rentalRepository.findRentalTrends(
                 dateRange.getFirst(),
                 dateRange.getSecond()
         );
-        DateTimeFormatter formatter = getFormatterForPeriod(period);
+        DateTimeFormatter formatter = getFormatterForPeriod(period); // Mantener esto por si acaso se necesita para la presentación en el frontend
         return trendsData.stream()
                 .map(entry -> {
                     String rawPeriod = (String) entry.get("period");
-                    LocalDate date = LocalDate.parse(rawPeriod + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                     Map<String,Object> result = new LinkedHashMap<>();
-                    result.put("period", date.format(formatter));
+                    result.put("period", rawPeriod); // Usar directamente el período de la base de datos
                     result.put("rentalCount", entry.get("rentalCount"));
 
                             if (entry.containsKey("totalRevenue")){
@@ -184,7 +183,6 @@ public class MetricsServiceImpl implements MetricsService {
                 })
                 .collect(Collectors.toList());
     }
-
     private DateTimeFormatter getFormatterForPeriod(ReportingConstants.TimePeriod period) {
         switch (period) {
             case MONTHLY: return DateTimeFormatter.ofPattern("yyyy-MM");
