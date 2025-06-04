@@ -84,7 +84,7 @@ public interface ReportingApi {
 
     @GetMapping("/metrics/vehicle-usage")
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
+    ResponseEntity<List<Map<String,Object>>> getVehicleUsageMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period // Added period
@@ -96,11 +96,12 @@ public interface ReportingApi {
 
     @GetMapping("/metrics/average-rental-duration")
     @PreAuthorize("hasRole('ADMIN')")
-    ResponseEntity<Map<String, Double>> getAverageRentalDurationMetric(
-            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
+    ResponseEntity<List<Map<String, Object>>> getAverageRentalDurationMetric(
+        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+        @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+        @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
     );
+
 
     @GetMapping("/metrics/top-customers")
     @PreAuthorize("hasRole('ADMIN')")

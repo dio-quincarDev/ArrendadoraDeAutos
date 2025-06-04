@@ -1,4 +1,3 @@
-// src/main/java/com/alquiler/car_rent/service/impl/reportsImpl/ReportingServiceImpl.java
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
@@ -95,7 +94,6 @@ public class ReportingServiceImpl implements ReportingService {
         return excelReportService.generateGenericTableExcel(headers, data);
     }
 
-    // Eliminar estos métodos si ya no se usan directamente desde otro lado
     @Override
     public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");

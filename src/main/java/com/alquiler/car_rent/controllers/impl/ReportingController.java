@@ -15,8 +15,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 public class ReportingController implements ReportingApi {
@@ -165,19 +167,30 @@ public class ReportingController implements ReportingApi {
     ) {
         Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
         return ResponseEntity.ok((Map<String, Object>) reportData.get("mostRentedVehicle"));
-        
+
     }
-    
+
     @Override
-    public ResponseEntity<Map<Vehicle, Long>> getVehicleUsageMetric(
+    public ResponseEntity<List<Map<String, Object>>> getVehicleUsageMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
     ) {
         Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
-        Map<Vehicle, Long> vehicleUsage = (Map<Vehicle, Long>) reportData.get("vehicleUsage");
-        return ResponseEntity.ok(vehicleUsage);
+        List<Map<String, Object>> usageList = (List<Map<String, Object>>) reportData.get("vehicleUsage");
+
+        List<Map<String, Object>> formatted = usageList.stream()
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("brandModel", entry.get("vehicle"));
+                    map.put("usageCount", entry.get("count"));
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(formatted);
     }
+
 
     @Override
     public ResponseEntity<Long> getNewCustomersCountMetric(
@@ -218,15 +231,27 @@ public class ReportingController implements ReportingApi {
     }
 
     @Override
-    public ResponseEntity<Map<String, Double>> getAverageRentalDurationMetric(
+    public ResponseEntity<List<Map<String, Object>>> getAverageRentalDurationMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(value = "period", required = false, defaultValue = "MONTHLY") ReportingConstants.TimePeriod period
     ) {
         Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
-        Map<String, Double> avgDurationByCustomer = (Map<String, Double>) reportData.get("averageRentalDurationByTopCustomers");
-        return ResponseEntity.ok(avgDurationByCustomer);
+        Map<String, Double> avgMap = (Map<String, Double>) reportData.get("averageRentalDurationByTopCustomers");
+
+        List<Map<String, Object>> formatted = avgMap.entrySet().stream()
+                .map(e -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("customer", e.getKey());
+                    map.put("averageDuration", e.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(formatted);
     }
+
+
 
     @Override
     public ResponseEntity<List<Map<String, Object>>> getTopCustomersMetric(

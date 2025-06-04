@@ -172,13 +172,19 @@ public class ChartReportServiceImpl implements ChartReportService {
                     return null;
 
                 case VEHICLE_USAGE:
-                    DefaultPieDataset pieDataset = new DefaultPieDataset();
-                    Map<Vehicle, Long> usage = (Map<Vehicle, Long>) data.get("vehicleUsage");
-                    if (usage != null) {
-                        usage.forEach((vehicle, count) -> pieDataset.setValue(vehicle.getBrand() + " " + vehicle.getModel(), count));
-                        JFreeChart chart = ChartFactory.createRingChart(
-                                "Uso de Vehículos", pieDataset, true, false, false);
-                        ((PiePlot) chart.getPlot()).setSectionOutlinesVisible(false);
+                    DefaultCategoryDataset usageDataset = new DefaultCategoryDataset();
+                    List<Map<String, Object>> vehicleUsage = (List<Map<String, Object>>) data.get("vehicleUsage");
+                    if (vehicleUsage != null) {
+                        for(Map<String,Object> entry : vehicleUsage){
+                            String label = (String) entry.get("brandModel");
+                            Number count = ((Number) entry.get("usageCount"));
+                            usageDataset.addValue(count, "Uso", label);
+                        }
+                        JFreeChart chart = ChartFactory.createBarChart(
+                                "Uso de Vehículos", "Vehículos", "Cantidad de Usos", usageDataset);
+                        CategoryPlot plot = chart.getCategoryPlot();
+                        ((BarRenderer) plot.getRenderer()).setDefaultItemLabelsVisible(true);
+                        plot.setOrientation(PlotOrientation.HORIZONTAL);
                         return chart;
                     }
                     return null;
