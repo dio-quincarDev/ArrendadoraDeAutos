@@ -1,6 +1,5 @@
-# Sistema de Gestión de Alquiler de Vehículos 🚗💨
+# Sistema de Gestión de Alquiler de Vehículos 🚗🚨
 
-## Tecnologías Principales
 <div align="center">
   <img src="https://img.shields.io/badge/java-007396?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java">
   <img src="https://img.shields.io/badge/spring%20boot-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Boot">
@@ -12,62 +11,63 @@
   <img src="https://img.shields.io/badge/intellij%20idea-000000?style=for-the-badge&logo=intellijidea&logoColor=white" alt="IntelliJ IDEA">
 </div>
 
-## Visión General 🌐
-Sistema backend robusto para gestión integral de alquiler de vehículos que maneja operaciones con vehículos, clientes y rentas con acceso seguro y controlado.
+## 🌐 Visión General del Proyecto
 
-**Logros Destacados:**
-- ✅ Resolución de problemas críticos de consistencia de datos
-- 🔒 Implementación de seguridad con JWT y control de roles
-- 📱 Sistema de mensajería SMS con Twilio
-- 📊 Módulo de reportes con exportación a múltiples formatos
-- ⚡ Optimización de consultas y manejo eficiente de datos
+Sistema backend robusto para la gestión integral de alquiler de vehículos, desarrollado con **Java 21** y **Spring Boot 3.2**. Permite manejar operaciones con vehículos, clientes y rentas, con funcionalidades avanzadas de seguridad, reportes y notificaciones por SMS.
+
+### ✨ Funcionalidades Clave
+
+* ✅ CRUD completo de vehículos, clientes y rentas
+* 🔢 Dashboard con métricas en tiempo real y visualizaciones
+* 📈 Exportación de reportes en PDF, Excel y formatos de gráfico
+* 🔒 Seguridad con autenticación JWT y control de acceso por roles
+* 📢 Notificaciones automáticas por SMS con Twilio
+* 🌐 API RESTful documentada con Swagger/OpenAPI
 
 ```mermaid
 graph TD
     A[API REST] --> B[Autenticación JWT]
-    A --> C[Gestión de Vehículos]
-    A --> D[Gestión de Clientes]
-    A --> E[Gestión de Rentas]
+    A --> C[Gestíon de Vehículos]
+    A --> D[Gestíon de Clientes]
+    A --> E[Gestíon de Rentas]
     E --> F[Reportes y Métricas]
     E --> G[Recordatorios SMS]
     F --> H[Exportación PDF/Excel]
     F --> I[Gráficos y Dashboards]
 ```
 
-## Stack Tecnológico ⚙️
-- **Backend:** Java 21, Spring Boot 3.2
-- **Base de Datos:** MySQL 8.0+
-- **Persistencia:** Spring Data JPA, Hibernate
-- **Seguridad:** Spring Security, JWT
-- **Comunicación Externa:** Twilio API
-- **Documentación:** Swagger/OpenAPI 3.0
-- **Herramientas:** Postman, IntelliJ IDEA
+## ⚙️ Stack Tecnológico
 
-## Modelo de Datos 📊
-### Entidades Principales
-| Entidad       | Atributos Clave                          | Estado                           |
-|---------------|------------------------------------------|----------------------------------|
-| **Vehículo**  | `id`, `marca`, `modelo`, `año`, `placa` | `DISPONIBLE`, `ALQUILADO`, `MANTENIMIENTO` |
-| **Cliente**   | `id`, `nombre`, `email`, `licencia`     | `ACTIVO`, `INACTIVO`, `BLOQUEADO` |
-| **Renta**     | `id`, `fechaInicio`, `fechaFin`, `estado` | `ACTIVA`, `COMPLETADA`, `CANCELADA` |
+* **Backend:** Java 21, Spring Boot 3.2, Spring Security
+* **Base de Datos:** MySQL con JPA/Hibernate
+* **Autenticación:** JWT (JSON Web Tokens)
+* **Mensajería:** Twilio SMS API
+* **Mapeo:** MapStruct
+* **Documentación:** OpenAPI/Swagger
+* **Reportes:** PDF, Excel, Charts (PNG/SVG)
 
-## Endpoints Clave 🔑
-### Autenticación
-| Método | Endpoint                | Descripción                     |
-|--------|-------------------------|---------------------------------|
-| `POST` | `/v1/auth/register`     | Registro de nuevos usuarios     |
-| `POST` | `/v1/auth/login`        | Inicio de sesión (obtener JWT)  |
+## 📊 Modelo de Datos Principal
 
-### Gestión de Vehículos
-| Método | Endpoint                | Rol Requerido | Función                     |
-|--------|-------------------------|---------------|-----------------------------|
-| `POST` | `/v1/vehicles`          | ADMIN         | Crear nuevo vehículo        |
-| `GET`  | `/v1/vehicles`          | USERS/ADMIN   | Listar todos vehículos      |
-| `GET`  | `/v1/vehicles/{id}`     | USERS/ADMIN   | Obtener vehículo por ID     |
-| `PUT`  | `/v1/vehicles/{id}`     | USERS/ADMIN   | Actualizar vehículo         |
-| `DELETE`| `/v1/vehicles/{id}`     | ADMIN         | Eliminar vehículo           |
+### Entidades Core
 
-### Reportes y Métricas
+| Entidad  | Campos Relevantes                                                                   | Estados Posibles                     |
+| -------- | ----------------------------------------------------------------------------------- | ------------------------------------ |
+| Vehículo | `brand`, `model`, `year`, `plate`, `status`, `createdAt`                            | `AVAILABLE`, `RENTED`, `MAINTENANCE` |
+| Cliente  | `name`, `email`, `license`, `phone`, `customerStatus`, `createdAt`, `updatedAt`     | `ACTIVE`, `INACTIVE`, `BLOCKED`      |
+| Renta    | Asociación `Customer-Vehicle`, `startDate`, `endDate`, `duration`, `cost`, `status` | `ACTIVA`, `COMPLETADA`, `CANCELADA`  |
+| Usuario  | `email`, `password`, `role`, `username` (BCrypt para password, Roles: ADMIN, USERS) | Autenticación y Autorización         |
+
+## 📈 Servicios y Arquitectura
+
+### Seguridad y Autenticación
+
+* `JwtAuthenticationFilter`: Interceptor y validador de tokens JWT
+* `SecurityConfig`: Configura accesos por roles
+* `JwtService`: Generación y validación de tokens
+* `GlobalExceptionHandler`: Manejo global de errores
+
+### Sistema de Reportes
+
 ```mermaid
 graph LR
     A[ReportingController] --> B[MetricsService]
@@ -78,83 +78,124 @@ graph LR
     D --> G[ChartGenerator]
 ```
 
-| Endpoint                          | Método | Descripción                                  |
-|-----------------------------------|--------|----------------------------------------------|
-| `/v1/reports`                     | `GET`  | Datos completos del dashboard                |
-| `/v1/reports/export`              | `GET`  | Exportar reportes (PDF/Excel/PNG)            |
-| `/v1/reports/metrics/total-rentals` | `GET`  | Obtener total de alquileres                  |
-| `/v1/reports/metrics/total-revenue` | `GET`  | Obtener ingresos totales                     |
-| `/v1/reports/export-metrics`      | `POST` | Exportar métricas genéricas a Excel          |
+* `MetricsServiceImpl`, `ReportDataServiceImpl`: Orquestación y extracción de datos
+* `ReportFormatServiceImpl`: Exporta en PDF, Excel, Charts
+* `ReportingController`: Exposición vía API REST
 
-## Soluciones Técnicas Clave 🛠️
-### Problemas Resueltos
-1. **Fechas Inválidas en Rentas**
-   - **Problema:** Valores extremos (`LocalDateTime.MAX`) causaban inconsistencias
-   - **Solución:** Implementación de fechas razonables (2100-12-31)
+### SMS Automatizados
 
-2. **Consultas Restrictivas**
-   - **Problema:** Filtros rígidos limitaban reportes dinámicos
-   - **Solución:** Refactorización con servicios especializados (`ReportDataService`, `MetricsService`)
+* `SmsServiceImpl`: Conexión directa con Twilio API
+* `RentalReminderServiceImpl`: Recordatorios automatizados (@Scheduled)
 
-3. **Manejo de Nulos**
-   - **Problema:** `NullPointerException` en parámetros no validados
-   - **Solución:** Validación robusta y valores por defecto para fechas
+## 🔍 API Endpoints
 
-### Arquitectura
-- **Seguridad JWT:** Autenticación stateless con tokens
-- **Control de Acceso:** Autorización basada en roles (ADMIN/USER)
-- **Módulo de Reportes:** 
-  - Separación clara entre obtención de datos y generación de formatos
-  - Patrón Strategy para diferentes formatos (PDF/Excel/Gráficos)
-- **Twilio Integration:** Envío automático de SMS para recordatorios
+### Autenticación
 
-## Documentación API 📖
-Acceso completo a documentación interactiva mediante Swagger UI:
-```
-http://localhost:8080/swagger-ui/index.html
-```
+* `POST /v1/auth/register` y `POST /v1/auth/login`
 
-## Instalación y Uso ⚡
-1. Clonar repositorio:
-```bash
-git clone https://github.com/tu-usuario/rental-system.git
-```
+### Vehículos
 
-2. Configurar variables de entorno (.env):
+* `GET /v1/vehicles`, `POST /v1/vehicles`, `GET/PUT/DELETE /v1/vehicles/{id}`
+
+### Clientes
+
+* `GET /v1/customers`, `POST /v1/customers`, `GET/PUT/DELETE /v1/customers/{id}`
+
+### Reportes y Métricas
+
+* `GET /v1/reports?period=MONTHLY&startDate=...`
+* `GET /v1/reports/export?format=PDF|EXCEL|CHART`
+* `GET /v1/reports/metrics/*` para métricas individuales
+
+### SMS
+
+* `POST /v1/sms/send?to=+1234567890&message=...`
+
+## 🛠️ Variables de Entorno
+
 ```env
-DB_URL=jdbc:mysql://localhost:3306/rental_db
-DB_USER=root
-DB_PASSWORD=secret
-TWILIO_ACCOUNT_SID=your_sid
-TWILIO_AUTH_TOKEN=your_token
-JWT_SECRET=secure_secret
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/vehicle_rental
+SPRING_DATASOURCE_USERNAME=your_username
+SPRING_DATASOURCE_PASSWORD=your_password
+JWT_SECRET_KEY=your-256-bit-secret-key
+JWT_EXPIRATION=86400000
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_PHONE_NUMBER=your_twilio_phone
 ```
 
-3. Ejecutar aplicación:
+## 📅 Instalación Rápida
+
 ```bash
+git clone https://github.com/yourusername/vehicle-rental-system.git
+cd vehicle-rental-system
+cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-## Ejemplo de Flujo ⚙️
-```mermaid
-sequenceDiagram
-    participant Cliente
-    participant API
-    participant Twilio
-    Cliente->>API: POST /v1/rentals (crear renta)
-    API->>Twilio: Programar recordatorio SMS
-    Cliente->>API: GET /v1/reports (dashboard)
-    API->>Cliente: Datos de métricas (JSON)
-    Cliente->>API: GET /v1/reports/export?format=PDF
-    API->>Cliente: Reporte PDF descargable
+## 🚀 Docker
+
+```dockerfile
+FROM openjdk:21-jdk-slim
+COPY target/vehicle-rental-*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
-## Contribución 🤝
-¡Se aceptan pull requests! Por favor asegúrese de:
-- Incluir pruebas unitarias para nuevas funcionalidades
-- Mantener coherencia en el estilo de código
-- Documentar nuevos endpoints en Swagger
-- Actualizar el archivo CHANGELOG.md
+```bash
+docker build -t vehicle-rental-system .
+docker run -p 8080:8080 --env-file .env vehicle-rental-system
+```
 
-## Licencia 📜
-MIT License - Ver archivo [LICENSE](LICENSE) para detalles.
+## 🪧 Problemas Resueltos
+
+1. Fechas extremas (`LocalDateTime.MAX`) corregidas con fechas controladas (`2100-12-31`)
+2. Consultas inflexibles optimizadas con rangos flexibles y servicios especializados
+3. NullPointerException prevenido con validación robusta y valores por defecto
+4. Separación de responsabilidades aplicada con arquitectura en capas
+
+## 🔋 KPIs y Métricas Empresariales
+
+* Total de alquileres, ingresos, vehículos utilizados
+* Duración promedio, retención de clientes, clientes activos
+* Tendencias por periodo, exportación a formatos ejecutivos
+
+## 🔧 Testing y Calidad
+
+* Validación con Bean Validation
+* Manejo global de excepciones
+* Logging centralizado
+* Arquitectura preparada para pruebas unitarias/integración
+
+## 💼 Contribución
+
+1. Fork del proyecto
+2. Crear rama `git checkout -b feature/X`
+3. Commit y push
+4. Pull request y actualización de Swagger + CHANGELOG
+
+## 👋 Contacto
+
+<table align="center">
+  <tr>
+    <td><a href="https://github.com/dio-quincarDev"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a></td>
+    <td><a href="https://linkedin.com/in/dio-quincar"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"></a></td>
+    <td><a href="mailto:dio-quincar@outlook.com"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a></td>
+  </tr>
+</table>
+
+
+## 📅 Para Reclutadores
+
+Este proyecto demuestra:
+
+* Desarrollo Backend con Java 21, Spring Boot
+* Seguridad JWT + Roles con Spring Security
+* Exportación de Reportes Profesionales (PDF, Excel, Charts)
+* Integración Twilio SMS
+* Análisis de datos, generación de métricas y dashboards
+* Arquitectura escalable, patrones SOLID
+
+---
+
+MIT License - Ver archivo [LICENSE.md](LICENSE.md)
