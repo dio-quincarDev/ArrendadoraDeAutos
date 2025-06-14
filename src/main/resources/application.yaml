@@ -25,7 +25,15 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
-    path: /swagger-ui.html
+    path: /swagger-ui
+    disable-swagger-default-url: true
+    operationsSorter: alpha
+    tagsSorter: alpha
+    doc-expansion: none
+    display-request-duration: true
+    filter: true
+    default-model-expand-depth: 1
+    persistAuthorization: true
 
 twilio:
   account:

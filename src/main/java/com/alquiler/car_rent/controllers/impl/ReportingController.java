@@ -203,14 +203,16 @@ public class ReportingController implements ReportingApi {
         return ResponseEntity.ok(newCustomers);
     }
 
-    @Override
+
     public ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
             @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        Map<String, Object> reportData = getGenericReportData(startDate, endDate, period);
-        List<Map<String, Object>> rentalTrends = (List<Map<String, Object>>) reportData.get("rentalTrends");
+        List<Map<String, Object>> rentalTrends =
+                (List<Map<String, Object>>) reportingService
+                        .generateReportData(period, startDate, endDate)
+                        .getOrDefault("rentalTrends", List.of());
         return ResponseEntity.ok(rentalTrends);
     }
 
