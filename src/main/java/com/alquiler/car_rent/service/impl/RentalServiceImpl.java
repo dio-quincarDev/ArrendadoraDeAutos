@@ -1,6 +1,8 @@
 package com.alquiler.car_rent.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,7 +15,6 @@ import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.RentalStatus;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.RentalMapper;
-import com.alquiler.car_rent.exceptions.InvalidRentalException;
 import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
@@ -76,6 +77,18 @@ public class RentalServiceImpl implements RentalService{
 	    if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
 	        throw new IllegalArgumentException("El vehiculo no está disponible para alquiler");
 	    }
+
+		// --- INICIO DE LA NUEVA LÓGICA DE CÁLCULO DE PRECIOS ---
+		BigDecimal dailyRate = calculateDailyRateForVehicle(vehicle);
+		long rentalDays = ChronoUnit.DAYS.between(rentalDto.getStartDate(), rentalDto.getEndDate());
+		if (rentalDays <= 0) {
+			rentalDays = 1; // Mínimo se cobra un día
+		}
+		BigDecimal totalPrice = dailyRate.multiply(new BigDecimal(rentalDays));
+		rental.setTotalPrice(totalPrice);
+		// --- FIN DE LA NUEVA LÓGICA ---
+
+
 	      //Actualiza el estado del vehiculo
 	      vehicle.setStatus(VehicleStatus.RENTED);
 	      vehicleRepository.save(vehicle);
@@ -87,6 +100,22 @@ public class RentalServiceImpl implements RentalService{
 	      
 		return rentalMapper.rentalToDto(rentalRepository.save(rental));
 	}
+
+	private BigDecimal calculateDailyRateForVehicle(Vehicle vehicle) {
+        if (vehicle.getVehicleType() == null || vehicle.getPricingTier() == null) {
+            throw new IllegalStateException("El vehículo con ID " + vehicle.getId() + " no tiene un modelo de precios configurado.");
+        }
+
+        switch (vehicle.getPricingTier()) {
+            case PROMOTIONAL:
+                return vehicle.getVehicleType().getPromotionalRate();
+            case PREMIUM:
+                return vehicle.getVehicleType().getPremiumRate();
+            case STANDARD:
+            default:
+                return vehicle.getVehicleType().getStandardRate();
+        }
+    }
 
 	@Override
 	public RentalDto updateRental(Long id, RentalDto rentalDto) {

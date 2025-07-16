@@ -2,38 +2,25 @@
 spring:
   application:
     name: car_rent
+  flyway:
+    enabled: true
+    locations: classpath:db/migrations
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
   datasource:
     url: jdbc:mysql://localhost:3306/arrendadora
     username: root
     password: diogenes
   jpa:
     hibernate:
-      ddl-auto: update # Crea/actualiza el esquema de la base de datos
+      ddl-auto: none # Crea/actualiza el esquema de la base de datos
     show-sql: true     # Imprime las consultas SQL en la consola
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect # Dialecto específico para MySQL
-    defer-datasource-initialization: true # Evita problemas de inicialización
   mvc:
     static-path-pattern: /static/**
-
-
-server:
-  port: 8080
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui
-    disable-swagger-default-url: true
-    operationsSorter: alpha
-    tagsSorter: alpha
-    doc-expansion: none
-    display-request-duration: true
-    filter: true
-    default-model-expand-depth: 1
-    persistAuthorization: true
 
 twilio:
   account:
@@ -54,3 +41,5 @@ logging:
       springframework:
         security: DEBUG
         web: DEBUG
+        org.flywaydb: DEBUG
+
