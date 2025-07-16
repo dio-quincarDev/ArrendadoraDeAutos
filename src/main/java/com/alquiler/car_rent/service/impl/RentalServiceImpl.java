@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import com.alquiler.car_rent.service.PricingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +28,15 @@ public class RentalServiceImpl implements RentalService{
 	private final VehicleRepository vehicleRepository;
 	private final CustomerRepository customerRepository;
 	private final RentalMapper rentalMapper;
+	private final PricingService pricingService;
 	
 	public RentalServiceImpl(RentalRepository rentalRepository, VehicleRepository vehicleRepository, 
-			CustomerRepository customerRepository, RentalMapper rentalMapper) {
+			CustomerRepository customerRepository, RentalMapper rentalMapper, PricingService pricingService) {
 		this.rentalRepository = rentalRepository;
 		this.vehicleRepository = vehicleRepository;
 		this.customerRepository = customerRepository;
 		this.rentalMapper = rentalMapper;
+		this.pricingService = pricingService;
 	}
     
 	@Override
@@ -78,15 +81,21 @@ public class RentalServiceImpl implements RentalService{
 	        throw new IllegalArgumentException("El vehiculo no está disponible para alquiler");
 	    }
 
-		// --- INICIO DE LA NUEVA LÓGICA DE CÁLCULO DE PRECIOS ---
-		BigDecimal dailyRate = calculateDailyRateForVehicle(vehicle);
+		// --- INICIO DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
+		// Validar que el chosenPricingTier no sea nulo
+		if (rentalDto.getChosenPricingTier() == null) {
+			throw new IllegalArgumentException("El nivel de precios elegido (chosenPricingTier) es requerido.");
+		}
+
+		BigDecimal dailyRate = pricingService.calculateDailyRate(vehicle.getVehicleType(), rentalDto.getChosenPricingTier());
 		long rentalDays = ChronoUnit.DAYS.between(rentalDto.getStartDate(), rentalDto.getEndDate());
 		if (rentalDays <= 0) {
 			rentalDays = 1; // Mínimo se cobra un día
 		}
 		BigDecimal totalPrice = dailyRate.multiply(new BigDecimal(rentalDays));
 		rental.setTotalPrice(totalPrice);
-		// --- FIN DE LA NUEVA LÓGICA ---
+		rental.setChosenPricingTier(rentalDto.getChosenPricingTier());
+		// --- FIN DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
 
 
 	      //Actualiza el estado del vehiculo
@@ -101,21 +110,7 @@ public class RentalServiceImpl implements RentalService{
 		return rentalMapper.rentalToDto(rentalRepository.save(rental));
 	}
 
-	private BigDecimal calculateDailyRateForVehicle(Vehicle vehicle) {
-        if (vehicle.getVehicleType() == null || vehicle.getPricingTier() == null) {
-            throw new IllegalStateException("El vehículo con ID " + vehicle.getId() + " no tiene un modelo de precios configurado.");
-        }
-
-        switch (vehicle.getPricingTier()) {
-            case PROMOTIONAL:
-                return vehicle.getVehicleType().getPromotionalRate();
-            case PREMIUM:
-                return vehicle.getVehicleType().getPremiumRate();
-            case STANDARD:
-            default:
-                return vehicle.getVehicleType().getStandardRate();
-        }
-    }
+	
 
 	@Override
 	public RentalDto updateRental(Long id, RentalDto rentalDto) {
@@ -127,9 +122,33 @@ public class RentalServiceImpl implements RentalService{
                 		  throw new IllegalArgumentException("Formato de fecha de alquiler no válido");
                 		}
 
+                    boolean datesChanged = !existingRental.getStartDate().equals(rentalDto.getStartDate()) ||
+                                           !existingRental.getEndDate().equals(rentalDto.getEndDate());
+                    boolean pricingTierChanged = rentalDto.getChosenPricingTier() != null &&
+                                                 !rentalDto.getChosenPricingTier().equals(existingRental.getChosenPricingTier());
+
                     existingRental.setStartDate(rentalDto.getStartDate());
                     existingRental.setEndDate(rentalDto.getEndDate());
-                    existingRental.setTotalPrice(rentalDto.getTotalPrice());
+
+                    if (rentalDto.getChosenPricingTier() != null) {
+                        existingRental.setChosenPricingTier(rentalDto.getChosenPricingTier());
+                    }
+
+                    if (datesChanged || pricingTierChanged) {
+                        Vehicle vehicle = existingRental.getVehicle();
+                        if (vehicle == null) {
+                            throw new IllegalStateException("Vehículo asociado al alquiler no encontrado.");
+                        }
+                        // Usar el chosenPricingTier de la entidad, que ya fue actualizado si se proporcionó en el DTO
+                        BigDecimal dailyRate = pricingService.calculateDailyRate(vehicle.getVehicleType(), existingRental.getChosenPricingTier());
+                        long rentalDays = ChronoUnit.DAYS.between(existingRental.getStartDate(), existingRental.getEndDate());
+                        if (rentalDays <= 0) {
+                            rentalDays = 1;
+                        }
+                        BigDecimal newTotalPrice = dailyRate.multiply(new BigDecimal(rentalDays));
+                        existingRental.setTotalPrice(newTotalPrice);
+                    }
+
                     return rentalMapper.rentalToDto(rentalRepository.save(existingRental));
                 })
                 .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
