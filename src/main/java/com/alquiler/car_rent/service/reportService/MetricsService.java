@@ -2,6 +2,8 @@ package com.alquiler.car_rent.service.reportService;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants.TimePeriod;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.PricingTier;
+import com.alquiler.car_rent.commons.enums.VehicleType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -71,4 +73,9 @@ public interface MetricsService {
 
     
 	List<Map<String, Object>> getCustomerActivity(TimePeriod period, LocalDate startDate, LocalDate endDate);
+
+    Map<VehicleType, Long> getRentalsCountByVehicleType(TimePeriod period, LocalDate startDate, LocalDate endDate);
+    Map<VehicleType, Double> getRevenueByVehicleType(TimePeriod period, LocalDate startDate, LocalDate endDate);
+    Map<PricingTier, Long> getRentalsCountByPricingTier(TimePeriod period, LocalDate startDate, LocalDate endDate);
+    Map<PricingTier, Double> getRevenueByPricingTier(TimePeriod period, LocalDate startDate, LocalDate endDate);
 }

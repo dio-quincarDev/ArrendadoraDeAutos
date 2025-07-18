@@ -1,1 +1,0 @@
- ALTER TABLE rentals ADD COLUMN chosen_pricing_tier VARCHAR(255);

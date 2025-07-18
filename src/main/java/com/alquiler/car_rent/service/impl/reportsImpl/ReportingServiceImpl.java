@@ -1,7 +1,6 @@
 package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
-import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.service.reportService.*;
 import org.slf4j.Logger;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ReportingServiceImpl implements ReportingService {
@@ -22,19 +20,22 @@ public class ReportingServiceImpl implements ReportingService {
     private final ExcelReportService excelReportService;
     private final JsonReportService jsonReportService;
     private final ChartReportService chartReportService;
+    private final MetricsService metricsService;
 
     public ReportingServiceImpl(
             ReportDataService reportDataService,
             PdfReportService pdfReportService,
             ExcelReportService excelReportService,
             JsonReportService jsonReportService,
-            ChartReportService chartReportService
+            ChartReportService chartReportService,
+            MetricsService metricsService
     ) {
         this.reportDataService = reportDataService;
         this.pdfReportService = pdfReportService;
         this.excelReportService = excelReportService;
         this.jsonReportService = jsonReportService;
         this.chartReportService = chartReportService;
+        this.metricsService = metricsService;
     }
 
     public Map<String, Object> generateReportData(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
@@ -82,11 +83,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public Map<Vehicle, Long> getVehicleUsage(LocalDate startDate, LocalDate endDate) {
-        return reportDataService.getRentalsInRange(startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay()).stream()
-                .collect(Collectors.groupingBy(
-                        Rental::getVehicle,
-                        Collectors.counting()
-                ));
+        return metricsService.getVehicleUsage(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
     }
 
     @Override
@@ -96,26 +93,56 @@ public class ReportingServiceImpl implements ReportingService {
 
     @Override
     public long getTotalRentals(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (long) reportData.getOrDefault("totalRentals", 0L);
     }
 
     @Override
     public double getTotalRevenue(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (double) reportData.getOrDefault("totalRevenue", 0.0);
     }
 
     @Override
     public long getUniqueVehiclesRented(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        List<Map<String, Object>> vehicleUsage = (List<Map<String, Object>>) reportData.getOrDefault("vehicleUsage", Collections.emptyList());
+        return vehicleUsage.size();
     }
 
     @Override
     public Map<String, Object> getMostRentedVehicle(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (Map<String, Object>) reportData.getOrDefault("mostRentedVehicle", Collections.emptyMap());
     }
 
     @Override
     public long getNewCustomersCount(LocalDate startDate, LocalDate endDate) {
-        throw new UnsupportedOperationException("Usar generateReportData() para obtener métricas");
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (long) reportData.getOrDefault("newCustomers", 0L);
+    }
+
+    @Override
+    public Map<com.alquiler.car_rent.commons.enums.VehicleType, Long> getRentalsByVehicleType(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (Map<com.alquiler.car_rent.commons.enums.VehicleType, Long>) reportData.getOrDefault("rentalsByVehicleType", Collections.emptyMap());
+    }
+
+    @Override
+    public Map<com.alquiler.car_rent.commons.enums.VehicleType, Double> getRevenueByVehicleType(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (Map<com.alquiler.car_rent.commons.enums.VehicleType, Double>) reportData.getOrDefault("revenueByVehicleType", Collections.emptyMap());
+    }
+
+    @Override
+    public Map<com.alquiler.car_rent.commons.enums.PricingTier, Long> getRentalsByPricingTier(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (Map<com.alquiler.car_rent.commons.enums.PricingTier, Long>) reportData.getOrDefault("rentalsByPricingTier", Collections.emptyMap());
+    }
+
+    @Override
+    public Map<com.alquiler.car_rent.commons.enums.PricingTier, Double> getRevenueByPricingTier(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> reportData = generateReportData(ReportingConstants.TimePeriod.ALL_TIME, startDate, endDate);
+        return (Map<com.alquiler.car_rent.commons.enums.PricingTier, Double>) reportData.getOrDefault("revenueByPricingTier", Collections.emptyMap());
     }
 }

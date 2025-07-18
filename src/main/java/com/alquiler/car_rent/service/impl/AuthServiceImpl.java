@@ -1,14 +1,9 @@
 package com.alquiler.car_rent.service.impl;
 
-import java.util.Optional;
-import java.util.Objects; // Importar Objects para chequeo de null
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import com.alquiler.car_rent.commons.dtos.LoginRequest;
 import com.alquiler.car_rent.commons.dtos.TokenResponse;
 import com.alquiler.car_rent.commons.dtos.UserEntityRequest; // DTO

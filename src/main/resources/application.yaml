@@ -5,16 +5,16 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migrations
-    baseline-on-migrate: true
+    baseline-on-migrate: false
     validate-on-migrate: true
     out-of-order: false
   datasource:
-    url: jdbc:mysql://localhost:3306/arrendadora
+    url: jdbc:mysql://localhost:3306/arrendadora2
     username: root
     password: diogenes
   jpa:
     hibernate:
-      ddl-auto: none # Crea/actualiza el esquema de la base de datos
+      ddl-auto: update # Crea/actualiza el esquema de la base de datos
     show-sql: true     # Imprime las consultas SQL en la consola
     properties:
       hibernate:

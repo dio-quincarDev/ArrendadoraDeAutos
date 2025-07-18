@@ -2,7 +2,6 @@ package com.alquiler.car_rent.controllers.impl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.dtos.ExportMetricsRequest;
-import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.controllers.ReportingApi;
 import com.alquiler.car_rent.service.reportService.ReportingService;
 import com.fasterxml.jackson.core.type.TypeReference;

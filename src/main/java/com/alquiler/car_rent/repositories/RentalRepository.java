@@ -137,4 +137,54 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     	        @Param("end") LocalDateTime end,
     	        Pageable pageable
     	);
+
+    // Para conteo de alquileres por tipo de vehículo
+    @Query("""
+    SELECT v.vehicleType AS vehicleType, COUNT(r) AS rentalCount
+    FROM Rental r
+    JOIN r.vehicle v
+    WHERE r.startDate <= :end AND r.endDate >= :start
+    GROUP BY v.vehicleType
+    """)
+    List<Map<String, Object>> findRentalCountsByVehicleType(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // Para ingresos por tipo de vehículo
+    @Query("""
+    SELECT v.vehicleType AS vehicleType, SUM(r.totalPrice) AS totalRevenue
+    FROM Rental r
+    JOIN r.vehicle v
+    WHERE r.startDate <= :end AND r.endDate >= :start
+    GROUP BY v.vehicleType
+    """)
+    List<Map<String, Object>> findRevenueByVehicleType(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // Para conteo de alquileres por nivel de precios
+    @Query("""
+    SELECT r.chosenPricingTier AS pricingTier, COUNT(r) AS rentalCount
+    FROM Rental r
+    WHERE r.startDate <= :end AND r.endDate >= :start
+    GROUP BY r.chosenPricingTier
+    """)
+    List<Map<String, Object>> findRentalCountsByPricingTier(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // Para ingresos por nivel de precios
+    @Query("""
+    SELECT r.chosenPricingTier AS pricingTier, SUM(r.totalPrice) AS totalRevenue
+    FROM Rental r
+    WHERE r.startDate <= :end AND r.endDate >= :start
+    GROUP BY r.chosenPricingTier
+    """)
+    List<Map<String, Object>> findRevenueByPricingTier(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }
