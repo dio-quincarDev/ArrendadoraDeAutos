@@ -1,5 +1,7 @@
 package com.alquiler.car_rent.exceptions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -10,6 +12,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 	@Schema(description = "Formato estándar para respuestas de error")
 	public static class ErrorResponse {
@@ -30,18 +34,23 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(NotFoundException.class)
 	public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex, WebRequest request) {
+        log.warn("Recurso no encontrado: {}", ex.getMessage());
 		ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value());
 		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(BadRequestException.class)
 	public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex, WebRequest request) {
+        log.warn("Solicitud incorrecta: {}", ex.getMessage());
 		ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
+    
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, WebRequest request) {
+        log.error("Ha ocurrido un error inesperado", ex);
 		ErrorResponse error = new ErrorResponse(
 				"Ha ocurrido un error inesperado",
 				HttpStatus.INTERNAL_SERVER_ERROR.value()

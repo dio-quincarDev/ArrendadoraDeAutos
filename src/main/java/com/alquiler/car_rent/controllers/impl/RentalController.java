@@ -1,13 +1,12 @@
 package com.alquiler.car_rent.controllers.impl;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.alquiler.car_rent.commons.dtos.RentalDto;
 import com.alquiler.car_rent.controllers.RentalApi;
 import com.alquiler.car_rent.service.RentalService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class RentalController implements RentalApi {
@@ -31,9 +30,8 @@ public class RentalController implements RentalApi {
 
 	@Override
 	public ResponseEntity<RentalDto> getRentalById(Long id) {
-		return rentalService.findRentalById(id)
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		RentalDto rentalDto = rentalService.findRentalById(id);
+		return ResponseEntity.ok(rentalDto);
 	}
 
 	@Override

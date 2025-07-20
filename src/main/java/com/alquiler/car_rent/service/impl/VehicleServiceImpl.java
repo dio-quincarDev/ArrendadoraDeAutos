@@ -1,16 +1,15 @@
 package com.alquiler.car_rent.service.impl;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.alquiler.car_rent.commons.dtos.VehicleDto;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.VehicleMapper;
+import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.VehicleService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class VehicleServiceImpl implements VehicleService {
@@ -31,9 +30,10 @@ public class VehicleServiceImpl implements VehicleService {
 	}
 
 	@Override
-	public Optional<VehicleDto> findVehicleById(Long id) {
-		
-		return vehicleRepository.findById(id).map(vehicleMapper::vehicleToDto);
+	public VehicleDto findVehicleById(Long id) {
+		return vehicleRepository.findById(id)
+                .map(vehicleMapper::vehicleToDto)
+                .orElseThrow(() -> new NotFoundException("Vehículo no encontrado con ID: " + id));
 	}
 
 	@Override
@@ -65,13 +65,13 @@ public class VehicleServiceImpl implements VehicleService {
 					vehicleRepository.save(existingVehicle);
 					return vehicleMapper.vehicleToDto(vehicleRepository.save(existingVehicle));
 				})
-		.orElseThrow(()-> new IllegalArgumentException("Vehiculo no encontrado con el ID" + id));
+		.orElseThrow(()-> new NotFoundException("Vehiculo no encontrado con el ID" + id));
 	}
 
 	@Override
 	public void deleteVehicle(Long id) {
 		   if (!vehicleRepository.existsById(id)) {
-	            throw new IllegalArgumentException("Vehículo no encontrado con ID: " + id);
+	            throw new NotFoundException("Vehículo no encontrado con ID: " + id);
 	        }
 	        vehicleRepository.deleteById(id);
 	}
