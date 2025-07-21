@@ -12,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -34,10 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // Inyectar el repositorio para la validación en BD
     private final UserEntityRepository userRepository;
 
-    // Ajustar constructor para inyectar UserEntityRepository
-    public JwtAuthenticationFilter(JwtService jwtService, UserEntityRepository userRepository) {
+    private final UserDetailsService userDetailsService;
+
+    public JwtAuthenticationFilter(JwtService jwtService, UserEntityRepository userRepository, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
-        this.userRepository = userRepository; // Asignar el repositorio inyectado
+        this.userRepository = userRepository;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -85,33 +89,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 4. Si tenemos userId, rol y no hay autenticación previa en el contexto
         if (userId != null && StringUtils.hasText(roleName) && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // ---- Validación OBLIGATORIA en BD (descomentada y activada) ----
+            // ---- Validación OBLIGATORIA en BD ----
+            // Primero, verificar si el usuario existe y está activo/habilitado usando el repositorio
             Optional<UserEntity> userOptional = userRepository.findById(userId.longValue());
 
-            // Verificar si el usuario existe Y si está habilitado (u otras condiciones como no bloqueado)
-            if (userOptional.isEmpty() || !userOptional.get().isEnabled()) { // Ajusta las condiciones según tu UserEntity (isEnabled, isAccountNonLocked, etc.)
-                log.warn("User ID {} from token not found in DB or is not active/enabled.", userId);
-                SecurityContextHolder.clearContext(); // Limpiar contexto si el usuario no es válido
-                filterChain.doFilter(request, response); // Continuar, pero sin autenticar
-                return; // Salir del filtro para esta solicitud
+            if (userOptional.isEmpty() || !userOptional.get().isEnabled() || !userOptional.get().isAccountNonExpired() || !userOptional.get().isAccountNonLocked() || !userOptional.get().isCredentialsNonExpired()) {
+                log.warn("User ID {} from token not found in DB or is not active/enabled/non-locked/non-expired.", userId);
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
             }
-            // Si el usuario existe y es válido, obtenemos sus detalles
-            UserEntity user = userOptional.get();
-            // Usar un identificador único y estable del usuario como principal (email o username)
-            String principal = user.getEmail(); // O user.getUsername(), dependiendo de lo que uses consistentemente
-            // ---- Fin Validación en BD ----
 
-
-            // *** LA CORRECCIÓN CLAVE (se mantiene igual) ***
-            // Crear la autoridad directamente con el nombre del rol extraído del token.
-            List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName));
-            log.debug("Creating Authentication object with principal: {} and authorities: {}", principal, authorities);
+            // Si el usuario existe y es válido, cargar los UserDetails completos usando el email
+            // Esto es crucial para que Spring Security tenga el objeto UserDetails completo
+            // y pueda realizar las comprobaciones de roles correctamente.
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userOptional.get().getEmail());
 
             // Crear el objeto Authentication
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    principal,   // Principal obtenido de la BD (email/username)
-                    null,        // Credenciales no necesarias
-                    authorities  // Autoridades (SIN prefijo "ROLE_")
+                    userDetails, // Usar el objeto UserDetails completo como principal
+                    null,        // Credenciales no necesarias para JWT
+                    userDetails.getAuthorities() // Obtener las autoridades directamente de UserDetails
             );
 
             // Establecer la autenticación en el contexto de seguridad
@@ -119,7 +117,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             context.setAuthentication(authToken);
             SecurityContextHolder.setContext(context);
 
-            log.info("User {} successfully authenticated with role {}.", principal, roleName);
+            log.info("User {} successfully authenticated with role {}.", userDetails.getUsername(), roleName);
 
             // (Opcional) Agregar ID de usuario a los atributos de la solicitud
             request.setAttribute("X-User-Id", userId);

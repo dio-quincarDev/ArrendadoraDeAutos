@@ -1,5 +1,6 @@
 package com.alquiler.car_rent.controllers;
 
+import com.alquiler.car_rent.commons.constants.ApiPathConstants;
 import com.alquiler.car_rent.commons.dtos.UserEntityRequest;
 import com.alquiler.car_rent.commons.entities.UserEntity;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +15,7 @@ import static com.alquiler.car_rent.commons.constants.ApiPathConstants.V1_ROUTE;
 import static com.alquiler.car_rent.commons.constants.ApiPathConstants.USERS_BASE_PATH;
 
 @Tag(name = "User Management", description = "API para la gestión de usuarios")
-@RequestMapping(V1_ROUTE + USERS_BASE_PATH)
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH)
 public interface UserApi {
 
     @Operation(summary = "Obtener todos los usuarios", responses = {

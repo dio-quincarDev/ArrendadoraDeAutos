@@ -48,6 +48,13 @@ public class GlobalExceptionHandler {
 
     
 
+	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+	public ResponseEntity<ErrorResponse> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+		log.warn("Acceso denegado: {}", ex.getMessage());
+		ErrorResponse error = new ErrorResponse("No tienes permiso para acceder a este recurso.", HttpStatus.FORBIDDEN.value());
+		return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, WebRequest request) {
         log.error("Ha ocurrido un error inesperado", ex);

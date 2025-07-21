@@ -85,15 +85,16 @@ public class UserManagementServiceImpl implements UserManagementService {
         String authenticatedUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         String initialAdminUsername = env.getProperty("application.initial-admin.username");
 
-        // Prevent initial admin from deleting themselves or other admins unless they are the initial admin
-        if (userToDelete.getRole() == Role.ADMIN) {
-            if (!authenticatedUsername.equals(initialAdminUsername)) {
-                throw new BadRequestException("Solo el administrador inicial puede eliminar otros administradores.");
-            }
-            if (userToDelete.getUsername().equals(initialAdminUsername)) {
-                throw new BadRequestException("El administrador inicial no puede eliminarse a sí mismo.");
-            }
+        // Solo el administrador inicial puede eliminar usuarios
+        if (!authenticatedUsername.equals(initialAdminUsername)) {
+            throw new BadRequestException("Solo el administrador inicial puede eliminar usuarios.");
         }
+
+        // El administrador inicial no puede eliminarse a sí mismo
+        if (userToDelete.getUsername().equals(initialAdminUsername)) {
+            throw new BadRequestException("El administrador inicial no puede eliminarse a sí mismo.");
+        }
+
         userEntityRepository.delete(userToDelete);
     }
 

@@ -28,7 +28,7 @@ import java.util.Map;
         name = "Reports",
         description = "Generación de reportes y métricas para el dashboard administrativo"
 )
-@RequestMapping( ApiPathConstants.REPORTS_BASE_PATH)
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH)
 public interface ReportingApi {
 
     @Operation(

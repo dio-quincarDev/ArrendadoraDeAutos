@@ -38,53 +38,29 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        // Endpoints de autenticación
                         .requestMatchers(
                                 ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/login",
                                 ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/register"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").permitAll()
 
                         // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Permite todas las peticiones OPTIONS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Endpoints exclusivos para ADMIN
-                        .requestMatchers(ApiPathConstants.V1_ROUTE + "/users/**").hasRole("ADMIN")
-                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/reports").hasRole("ADMIN")
-                        .requestMatchers(
-                        	    HttpMethod.GET, 
-                        	    ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/metrics/**"
-                        	).hasRole("ADMIN")
-                        	.requestMatchers(
-                        	    HttpMethod.GET,
-                        	    ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/export"
-                        	).hasRole("ADMIN")
-                        
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasRole("ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasRole("ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasRole("ADMIN")
 
-                        // Operaciones sobre customers y vehicles - USER puede modificar (GET, PUT)
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                ApiPathConstants.V1_ROUTE + "/customers/**",
-                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasAnyRole("USERS", "ADMIN")
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                ApiPathConstants.V1_ROUTE + "/customers/**",
-                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasAnyRole("USERS", "ADMIN")
-                        // Operaciones sobre customers y vehicles - ADMIN puede crear y eliminar
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                ApiPathConstants.V1_ROUTE + "/customers/**",
-                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasRole("ADMIN")
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                ApiPathConstants.V1_ROUTE + "/customers/**",
-                                ApiPathConstants.V1_ROUTE + "/vehicles/**"
-                        ).hasRole("ADMIN")
-
-                        // Endpoints para rentals
-                        .requestMatchers(ApiPathConstants.V1_ROUTE + "/rentals/**").hasAnyRole("USERS", "ADMIN")
+                        // Endpoints para USERS y ADMIN
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
 
                         // Cualquier otra solicitud requiere autenticación
                         .anyRequest().authenticated()
@@ -98,4 +74,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }
