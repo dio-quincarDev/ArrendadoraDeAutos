@@ -35,6 +35,13 @@ jwt:
   header: Authorization
   prefix: Bearer
   expiration-time: 86400000
+vonage:
+  api-key: b46b269d
+  api-secret: ZarIvan20
+  from-number: 50768429447
+
+sms:
+  provider: vonage
 
 logging:
   level:

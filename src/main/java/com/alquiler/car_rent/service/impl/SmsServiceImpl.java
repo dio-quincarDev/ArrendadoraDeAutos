@@ -1,58 +1,43 @@
 package com.alquiler.car_rent.service.impl;
 
-import org.springframework.stereotype.Service;
-import com.alquiler.car_rent.config.TwilioConfigProperties;
-import com.alquiler.car_rent.service.SmsService;
-import com.twilio.Twilio;
-import com.twilio.exception.ApiException;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
-import jakarta.annotation.PostConstruct;
+import com.alquiler.car_rent.config.SmsProviderConfig;
+import com.alquiler.car_rent.service.SmsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
-public class SmsServiceImpl implements SmsService {
+public class SmsServiceImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SmsServiceImpl.class);
 
-    private final TwilioConfigProperties twilioConfig;
+    private final SmsProvider activeProvider;
 
-    public SmsServiceImpl(TwilioConfigProperties twilioConfig) {
-        this.twilioConfig = twilioConfig;
-    }
+    public SmsServiceImpl(SmsProviderConfig providerConfig, List<SmsProvider> smsProviders) {
+        Map<String, SmsProvider> providerMap = smsProviders.stream()
+                .collect(Collectors.toMap(SmsProvider::getProviderName, Function.identity()));
 
-    @PostConstruct
-    public void init() {
-        if (twilioConfig.isEnabled()) {
-            if (twilioConfig.getAccountSid() == null || twilioConfig.getAuthToken() == null) {
-                LOGGER.warn("Twilio está habilitado pero las credenciales (SID o Token) no están configuradas. No se podrán enviar SMS.");
-            } else {
-                Twilio.init(twilioConfig.getAccountSid(), twilioConfig.getAuthToken());
-                LOGGER.info("Servicio de Twilio inicializado.");
-            }
+        String providerName = providerConfig.getProvider();
+        this.activeProvider = providerMap.get(providerName);
+
+        if (this.activeProvider != null) {
+            LOGGER.info("Proveedor de SMS activo: {}", this.activeProvider.getProviderName());
         } else {
-            LOGGER.info("El servicio de Twilio está deshabilitado por configuración.");
+            LOGGER.error("No se encontró un proveedor de SMS para el nombre: {}. El envío de SMS no funcionará.", providerName);
+            // Considera lanzar una excepción aquí si el envío de SMS es crítico
         }
     }
 
-    @Override
     public void sendSms(String to, String text) {
-        if (!twilioConfig.isEnabled()) {
-            LOGGER.debug("Intento de envío de SMS mientras el servicio está deshabilitado. Ignorando.");
+        if (activeProvider == null) {
+            LOGGER.warn("No hay un proveedor de SMS activo. No se puede enviar el mensaje.");
             return;
         }
-
-        try {
-            Message.creator(
-                new PhoneNumber(to),
-                new PhoneNumber(twilioConfig.getPhoneNumber()),
-                text
-            ).create();
-            LOGGER.info("SMS enviado exitosamente al número: {}", to);
-        } catch (ApiException e) {
-            LOGGER.error("Error al enviar SMS al número {}: {} - Código de error: {}", to, e.getMessage(), e.getCode(), e);
-            // La excepción no se relanza para no detener el proceso principal (ej. recordatorios)
-        }
+        activeProvider.sendSms(to, text);
     }
 }

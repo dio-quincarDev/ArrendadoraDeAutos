@@ -12,5 +12,5 @@ public class TwilioConfigProperties {
     private String accountSid;
     private String authToken;
     private String phoneNumber;
-    private boolean enabled = true; // Habilitado por defecto
+    private boolean enabled = false; // Habilitado por defecto
 }

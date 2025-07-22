@@ -11,15 +11,14 @@ import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.enums.RentalStatus;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.AdminAlertService;
-import com.alquiler.car_rent.service.SmsService;
 
 @Service
 public class RentalReminderServiceImpl {
 	private final RentalRepository rentalRepository;
-	private final SmsService smsService;
+	private final SmsServiceImpl smsService;
 	private final AdminAlertService adminAlertService;
 
-	public RentalReminderServiceImpl(RentalRepository rentalRepository, SmsService smsService, AdminAlertService adminAlertService) {
+	public RentalReminderServiceImpl(RentalRepository rentalRepository, SmsServiceImpl smsService, AdminAlertService adminAlertService) {
 		this.rentalRepository = rentalRepository;
 		this.smsService = smsService;
 		this.adminAlertService = adminAlertService;
