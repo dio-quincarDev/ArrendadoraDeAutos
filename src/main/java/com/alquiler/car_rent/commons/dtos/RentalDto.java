@@ -23,28 +23,37 @@ public class RentalDto {
     @NotNull(message = "ID no puede ser nulo")
     @Schema(description = "ID único del alquiler", example = "1")
     private Long id;
+
 	@NotNull(message = "Customer ID es requerido")
     @Schema(description = "ID del cliente que realiza el alquiler", example = "101")
     private Long customerId;
+
 	@NotBlank(message = "Nombre de cliente es obligatorio")
     @Schema(description = "Nombre del cliente", example = "Juan Pérez")
     private String customerName;
+
     @NotNull(message = "Vehicle ID es requerido")
     @Schema(description = "ID del vehículo alquilado", example = "201")
     private Long vehicleId;
     
     @Schema(description = "Modelo del vehículo", example = "Corolla")
     private String vehicleModel;
+
     @Schema(description = "Marca del vehículo", example = "Toyota")
     private String vehicleBrand;
+
     @Schema(description = "Estado actual del alquiler", example = "RENTED")
     private RentalStatus rentalStatus;
+
     @Schema(description = "Tipo de vehículo", example = "SEDAN")
     private String vehicleType;
+
     @Schema(description = "Nivel de precios del vehículo", example = "PREMIUM")
     private String pricingTier;
+
     @Schema(description = "Tarifa diaria del vehículo", example = "50.00")
     private BigDecimal dailyRate;
+
     @Schema(description = "Nivel de precios elegido para el alquiler", example = "STANDARD")
     private PricingTier chosenPricingTier;
     
@@ -62,6 +71,7 @@ public class RentalDto {
     @Digits(integer = 10, fraction = 2, message = "Formato de precio inválido")
     @Schema(description = "Precio total del alquiler", example = "200.00")
     private BigDecimal totalPrice;
+
     @Schema(description = "Fecha y hora de creación del registro de alquiler", example = "2023-07-21 09:50:00")
     private LocalDateTime createdAt;
 

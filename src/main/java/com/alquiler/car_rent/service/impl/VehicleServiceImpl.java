@@ -8,6 +8,7 @@ import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.VehicleService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class VehicleServiceImpl implements VehicleService {
 	}
 
 	@Override
+    @Transactional(readOnly = true)
 	public List<VehicleDto> findAllVehicles() {
 		return vehicleRepository.findAll()
 				.stream()
@@ -30,6 +32,7 @@ public class VehicleServiceImpl implements VehicleService {
 	}
 
 	@Override
+    @Transactional(readOnly = true)
 	public VehicleDto findVehicleById(Long id) {
 		return vehicleRepository.findById(id)
                 .map(vehicleMapper::vehicleToDto)
@@ -37,6 +40,7 @@ public class VehicleServiceImpl implements VehicleService {
 	}
 
 	@Override
+    @Transactional(readOnly = true)
 	public List<VehicleDto> findVehicleByStatus(VehicleStatus status) {
 		   return vehicleRepository.findByStatus(status)
 				.stream()
@@ -45,30 +49,28 @@ public class VehicleServiceImpl implements VehicleService {
 	}
 
 	@Override
+    @Transactional
 	public VehicleDto createVehicle(VehicleDto vehicleDto) {
 		Vehicle vehicle = vehicleMapper.dtoToVehicle(vehicleDto);
 		vehicle.setStatus(VehicleStatus.AVAILABLE);
-		return vehicleMapper.vehicleToDto(vehicleRepository.save(vehicle));
+		Vehicle savedVehicle = vehicleRepository.save(vehicle);
+        return vehicleMapper.vehicleToDto(savedVehicle);
 	}
 
 	@Override
+    @Transactional
 	public VehicleDto updateVehicle(Long id, VehicleDto vehicleDto) {
 		return vehicleRepository.findById(id)
 				.map(existingVehicle-> {
-					existingVehicle.setBrand(vehicleDto.getBrand());
-					existingVehicle.setModel(vehicleDto.getModel());
-					existingVehicle.setYear(vehicleDto.getYear());
-					existingVehicle.setPlate(vehicleDto.getPlate());
-					existingVehicle.setStatus(vehicleDto.getStatus());
-                    existingVehicle.setVehicleType(vehicleDto.getVehicleType());
-                    existingVehicle.setPricingTier(vehicleDto.getPricingTier());
-					vehicleRepository.save(existingVehicle);
-					return vehicleMapper.vehicleToDto(vehicleRepository.save(existingVehicle));
+					vehicleMapper.updateVehicleFromDto(vehicleDto, existingVehicle);
+					// No es necesario llamar a save() aquí, la transacción se encargará de persistir los cambios.
+					return vehicleMapper.vehicleToDto(existingVehicle);
 				})
 		.orElseThrow(()-> new NotFoundException("Vehiculo no encontrado con el ID" + id));
 	}
 
 	@Override
+    @Transactional
 	public void deleteVehicle(Long id) {
 		   if (!vehicleRepository.existsById(id)) {
 	            throw new NotFoundException("Vehículo no encontrado con ID: " + id);

@@ -3,7 +3,10 @@ package com.alquiler.car_rent.controllers.impl;
 import com.alquiler.car_rent.commons.dtos.VehicleDto;
 import com.alquiler.car_rent.controllers.VehicleApi;
 import com.alquiler.car_rent.service.VehicleService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,9 +21,9 @@ public class VehicleController implements VehicleApi {
 	    }
 
 	@Override
-	public ResponseEntity<VehicleDto> createVehicle(VehicleDto vehicleDto) {
+	public ResponseEntity<VehicleDto> createVehicle(@Valid @RequestBody VehicleDto vehicleDto) {
 		VehicleDto createdVehicle = vehicleService.createVehicle(vehicleDto);
-		return ResponseEntity.ok(createdVehicle);
+		return new ResponseEntity<>(createdVehicle, HttpStatus.CREATED);
 	}
 
 	@Override
@@ -36,7 +39,7 @@ public class VehicleController implements VehicleApi {
 	}
 
 	@Override
-	public ResponseEntity<VehicleDto> updateVehicle(Long id, VehicleDto vehicleDto) {
+	public ResponseEntity<VehicleDto> updateVehicle(Long id, @Valid @RequestBody VehicleDto vehicleDto) {
 		VehicleDto updatedVehicle = vehicleService.updateVehicle(id, vehicleDto);
 		return ResponseEntity.ok(updatedVehicle);
 	}
