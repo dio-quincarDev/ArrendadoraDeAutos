@@ -2,9 +2,10 @@ package com.alquiler.car_rent.service.reportService;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.VehicleType;
+import com.alquiler.car_rent.commons.enums.PricingTier;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -94,8 +95,16 @@ public interface ReportingService {
      * Genera un archivo Excel genérico a partir de una tabla de datos enviada desde frontend.
      *
      * @param headers Encabezados de las columnas
-     * @param data Filas de datos (cada fila es una lista de strings)
+     * @param data    Filas de datos (cada fila es una lista de strings)
      * @return Excel en bytes listo para descargar
      */
     byte[] generateGenericTableExcel(List<String> headers, List<List<String>> data);
+
+    Map<VehicleType, Long> getRentalsByVehicleType(LocalDate startDate, LocalDate endDate);
+
+    Map<VehicleType, Double> getRevenueByVehicleType(LocalDate startDate, LocalDate endDate);
+
+    Map<PricingTier, Long> getRentalsByPricingTier(LocalDate startDate, LocalDate endDate);
+
+    Map<PricingTier, Double> getRevenueByPricingTier(LocalDate startDate, LocalDate endDate);
 }

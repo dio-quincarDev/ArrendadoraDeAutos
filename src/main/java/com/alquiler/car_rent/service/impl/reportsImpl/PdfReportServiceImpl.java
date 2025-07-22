@@ -2,6 +2,8 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.VehicleType;
+import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.alquiler.car_rent.exceptions.GlobalExceptionHandler;
 import com.alquiler.car_rent.service.reportService.PdfReportService;
 import com.itextpdf.text.*;
@@ -89,6 +91,10 @@ public class PdfReportServiceImpl implements PdfReportService {
                 case RENTAL_SUMMARY -> addRentalSummary(doc, data);
                 case REVENUE_ANALYSIS -> addRevenueAnalysis(doc, data);
                 case CUSTOMER_ACTIVITY -> addCustomerActivity(doc, data);
+                case RENTALS_BY_VEHICLE_TYPE -> addRentalsByVehicleTypeTable(doc, data);
+                case REVENUE_BY_VEHICLE_TYPE -> addRevenueByVehicleTypeTable(doc, data);
+                case RENTALS_BY_PRICING_TIER -> addRentalsByPricingTierTable(doc, data);
+                case REVENUE_BY_PRICING_TIER -> addRevenueByPricingTierTable(doc, data);
                 default -> doc.add(new Paragraph("Contenido no disponible para este tipo de reporte.", normalFont));
             }
         } catch (Exception e) {
@@ -279,5 +285,101 @@ public class PdfReportServiceImpl implements PdfReportService {
     @Override
     public String getReportTitle(ReportingConstants.ReportType reportType) {
         return reportType.getTitle() + " (PDF)";
+    }
+
+    private void addRentalsByVehicleTypeTable(Document doc, Map<String, Object> data) throws DocumentException {
+        Map<VehicleType, Long> rentals = (Map<VehicleType, Long>) data.get("rentalsByVehicleType");
+        if (rentals == null || rentals.isEmpty()) return;
+
+        Paragraph title = new Paragraph("Alquileres por Tipo de Vehículo", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        doc.add(title);
+        doc.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(80);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        addTableHeader(table, "Tipo de Vehículo");
+        addTableHeader(table, "Cantidad de Alquileres");
+
+        rentals.forEach((type, count) -> {
+            table.addCell(new Phrase(type.name(), normalFont));
+            table.addCell(new Phrase(String.valueOf(count), normalFont));
+        });
+
+        doc.add(table);
+        doc.add(Chunk.NEWLINE);
+    }
+
+    private void addRevenueByVehicleTypeTable(Document doc, Map<String, Object> data) throws DocumentException {
+        Map<VehicleType, Double> revenue = (Map<VehicleType, Double>) data.get("revenueByVehicleType");
+        if (revenue == null || revenue.isEmpty()) return;
+
+        Paragraph title = new Paragraph("Ingresos por Tipo de Vehículo", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        doc.add(title);
+        doc.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(80);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        addTableHeader(table, "Tipo de Vehículo");
+        addTableHeader(table, "Ingresos Totales");
+
+        revenue.forEach((type, amount) -> {
+            table.addCell(new Phrase(type.name(), normalFont));
+            table.addCell(new Phrase("$" + String.format("%.2f", amount), normalFont));
+        });
+
+        doc.add(table);
+        doc.add(Chunk.NEWLINE);
+    }
+
+    private void addRentalsByPricingTierTable(Document doc, Map<String, Object> data) throws DocumentException {
+        Map<PricingTier, Long> rentals = (Map<PricingTier, Long>) data.get("rentalsByPricingTier");
+        if (rentals == null || rentals.isEmpty()) return;
+
+        Paragraph title = new Paragraph("Alquileres por Nivel de Precios", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        doc.add(title);
+        doc.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(80);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        addTableHeader(table, "Nivel de Precios");
+        addTableHeader(table, "Cantidad de Alquileres");
+
+        rentals.forEach((tier, count) -> {
+            table.addCell(new Phrase(tier.name(), normalFont));
+            table.addCell(new Phrase(String.valueOf(count), normalFont));
+        });
+
+        doc.add(table);
+        doc.add(Chunk.NEWLINE);
+    }
+
+    private void addRevenueByPricingTierTable(Document doc, Map<String, Object> data) throws DocumentException {
+        Map<PricingTier, Double> revenue = (Map<PricingTier, Double>) data.get("revenueByPricingTier");
+        if (revenue == null || revenue.isEmpty()) return;
+
+        Paragraph title = new Paragraph("Ingresos por Nivel de Precios", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        doc.add(title);
+        doc.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(80);
+        table.setHorizontalAlignment(Element.ALIGN_CENTER);
+        addTableHeader(table, "Nivel de Precios");
+        addTableHeader(table, "Ingresos Totales");
+
+        revenue.forEach((tier, amount) -> {
+            table.addCell(new Phrase(tier.name(), normalFont));
+            table.addCell(new Phrase("$" + String.format("%.2f", amount), normalFont));
+        });
+
+        doc.add(table);
+        doc.add(Chunk.NEWLINE);
     }
 }

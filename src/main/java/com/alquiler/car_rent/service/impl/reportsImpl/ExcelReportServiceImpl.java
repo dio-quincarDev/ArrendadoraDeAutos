@@ -2,6 +2,8 @@ package com.alquiler.car_rent.service.impl.reportsImpl;
 
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Vehicle;
+import com.alquiler.car_rent.commons.enums.VehicleType;
+import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.alquiler.car_rent.service.reportService.ExcelReportService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -235,6 +237,19 @@ public class ExcelReportServiceImpl implements ExcelReportService {
                     }
                     break;
 
+                case RENTALS_BY_VEHICLE_TYPE:
+                    addRentalsByVehicleTypeSheet(workbook, data, headerStyle, dataStyle);
+                    break;
+                case REVENUE_BY_VEHICLE_TYPE:
+                    addRevenueByVehicleTypeSheet(workbook, data, headerStyle, dataStyle);
+                    break;
+                case RENTALS_BY_PRICING_TIER:
+                    addRentalsByPricingTierSheet(workbook, data, headerStyle, dataStyle);
+                    break;
+                case REVENUE_BY_PRICING_TIER:
+                    addRevenueByPricingTierSheet(workbook, data, headerStyle, dataStyle);
+                    break;
+
                 default:
                     Row defaultRow = sheet.createRow(currentRowNum[0]++);
                     createSafeCell(defaultRow, 0, "Reporte no implementado: " + reportType, dataStyle);
@@ -299,5 +314,87 @@ public class ExcelReportServiceImpl implements ExcelReportService {
     @Override
     public String getReportTitle(ReportingConstants.ReportType reportType) {
         return reportType.getTitle() + " - " + java.time.LocalDate.now();
+    }
+
+    private void addRentalsByVehicleTypeSheet(XSSFWorkbook workbook, Map<String, Object> data, XSSFCellStyle headerStyle, XSSFCellStyle dataStyle) {
+        XSSFSheet sheet = workbook.createSheet("Alquileres por Tipo de Vehículo");
+        int rowNum = 0;
+
+        Row headerRow = sheet.createRow(rowNum++);
+        createSafeCell(headerRow, 0, "Tipo de Vehículo", headerStyle);
+        createSafeCell(headerRow, 1, "Cantidad de Alquileres", headerStyle);
+
+        Map<VehicleType, Long> rentals = (Map<VehicleType, Long>) data.get("rentalsByVehicleType");
+        if (rentals != null) {
+            for (Map.Entry<VehicleType, Long> entry : rentals.entrySet()) {
+                Row row = sheet.createRow(rowNum++);
+                createSafeCell(row, 0, entry.getKey().name(), dataStyle);
+                createSafeCell(row, 1, entry.getValue(), dataStyle);
+            }
+        }
+        autoSizeColumns(sheet, 2);
+    }
+
+    private void addRevenueByVehicleTypeSheet(XSSFWorkbook workbook, Map<String, Object> data, XSSFCellStyle headerStyle, XSSFCellStyle dataStyle) {
+        XSSFSheet sheet = workbook.createSheet("Ingresos por Tipo de Vehículo");
+        int rowNum = 0;
+
+        Row headerRow = sheet.createRow(rowNum++);
+        createSafeCell(headerRow, 0, "Tipo de Vehículo", headerStyle);
+        createSafeCell(headerRow, 1, "Ingresos Totales", headerStyle);
+
+        Map<VehicleType, Double> revenue = (Map<VehicleType, Double>) data.get("revenueByVehicleType");
+        if (revenue != null) {
+            for (Map.Entry<VehicleType, Double> entry : revenue.entrySet()) {
+                Row row = sheet.createRow(rowNum++);
+                createSafeCell(row, 0, entry.getKey().name(), dataStyle);
+                createSafeCell(row, 1, String.format("%.2f", entry.getValue()), dataStyle);
+            }
+        }
+        autoSizeColumns(sheet, 2);
+    }
+
+    private void addRentalsByPricingTierSheet(XSSFWorkbook workbook, Map<String, Object> data, XSSFCellStyle headerStyle, XSSFCellStyle dataStyle) {
+        XSSFSheet sheet = workbook.createSheet("Alquileres por Nivel de Precios");
+        int rowNum = 0;
+
+        Row headerRow = sheet.createRow(rowNum++);
+        createSafeCell(headerRow, 0, "Nivel de Precios", headerStyle);
+        createSafeCell(headerRow, 1, "Cantidad de Alquileres", headerStyle);
+
+        Map<PricingTier, Long> rentals = (Map<PricingTier, Long>) data.get("rentalsByPricingTier");
+        if (rentals != null) {
+            for (Map.Entry<PricingTier, Long> entry : rentals.entrySet()) {
+                Row row = sheet.createRow(rowNum++);
+                createSafeCell(row, 0, entry.getKey().name(), dataStyle);
+                createSafeCell(row, 1, entry.getValue(), dataStyle);
+            }
+        }
+        autoSizeColumns(sheet, 2);
+    }
+
+    private void addRevenueByPricingTierSheet(XSSFWorkbook workbook, Map<String, Object> data, XSSFCellStyle headerStyle, XSSFCellStyle dataStyle) {
+        XSSFSheet sheet = workbook.createSheet("Ingresos por Nivel de Precios");
+        int rowNum = 0;
+
+        Row headerRow = sheet.createRow(rowNum++);
+        createSafeCell(headerRow, 0, "Nivel de Precios", headerStyle);
+        createSafeCell(headerRow, 1, "Ingresos Totales", headerStyle);
+
+        Map<PricingTier, Double> revenue = (Map<PricingTier, Double>) data.get("revenueByPricingTier");
+        if (revenue != null) {
+            for (Map.Entry<PricingTier, Double> entry : revenue.entrySet()) {
+                Row row = sheet.createRow(rowNum++);
+                createSafeCell(row, 0, entry.getKey().name(), dataStyle);
+                createSafeCell(row, 1, String.format("%.2f", entry.getValue()), dataStyle);
+            }
+        }
+        autoSizeColumns(sheet, 2);
+    }
+
+    private void autoSizeColumns(XSSFSheet sheet, int numColumns) {
+        for (int i = 0; i < numColumns; i++) {
+            sheet.autoSizeColumn(i);
+        }
     }
 }

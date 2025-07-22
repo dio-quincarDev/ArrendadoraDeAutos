@@ -10,7 +10,6 @@ import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.chart.renderer.xy.*;
 import org.jfree.data.category.*;
-import org.jfree.data.general.*;
 import org.jfree.data.xy.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

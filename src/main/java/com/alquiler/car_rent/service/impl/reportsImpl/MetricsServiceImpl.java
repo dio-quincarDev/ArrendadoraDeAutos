@@ -4,6 +4,8 @@ import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
+import com.alquiler.car_rent.commons.enums.VehicleType;
+import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.repositories.VehicleRepository;
@@ -302,4 +304,43 @@ public class MetricsServiceImpl implements MetricsService {
 	
 	}
    
+    @Override
+    public Map<VehicleType, Long> getRentalsCountByVehicleType(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+        return rentalRepository.findRentalCountsByVehicleType(dateRange.getFirst(), dateRange.getSecond()).stream()
+                .collect(Collectors.toMap(
+                        entry -> VehicleType.valueOf(entry.get("vehicleType").toString()),
+                        entry -> ((Number) entry.get("rentalCount")).longValue()
+                ));
+    }
+
+    @Override
+    public Map<VehicleType, Double> getRevenueByVehicleType(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+        return rentalRepository.findRevenueByVehicleType(dateRange.getFirst(), dateRange.getSecond()).stream()
+                .collect(Collectors.toMap(
+                        entry -> VehicleType.valueOf(entry.get("vehicleType").toString()),
+                        entry -> ((Number) entry.get("totalRevenue")).doubleValue()
+                ));
+    }
+
+    @Override
+    public Map<PricingTier, Long> getRentalsCountByPricingTier(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+        return rentalRepository.findRentalCountsByPricingTier(dateRange.getFirst(), dateRange.getSecond()).stream()
+                .collect(Collectors.toMap(
+                        entry -> PricingTier.valueOf(entry.get("pricingTier").toString()),
+                        entry -> ((Number) entry.get("rentalCount")).longValue()
+                ));
+    }
+
+    @Override
+    public Map<PricingTier, Double> getRevenueByPricingTier(ReportingConstants.TimePeriod period, LocalDate startDate, LocalDate endDate) {
+        Pair<LocalDateTime, LocalDateTime> dateRange = getDateRange(startDate, endDate, period);
+        return rentalRepository.findRevenueByPricingTier(dateRange.getFirst(), dateRange.getSecond()).stream()
+                .collect(Collectors.toMap(
+                        entry -> PricingTier.valueOf(entry.get("pricingTier").toString()),
+                        entry -> ((Number) entry.get("totalRevenue")).doubleValue()
+                ));
+    }
 }

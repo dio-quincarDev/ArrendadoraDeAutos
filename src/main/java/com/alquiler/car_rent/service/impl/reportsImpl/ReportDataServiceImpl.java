@@ -81,6 +81,8 @@ public class ReportDataServiceImpl implements ReportDataService {
         addBasicMetrics(reportData, rentals);
         addCustomerMetrics(reportData, timePeriod, start, end);
         addVehicleMetrics(reportData, timePeriod, start, end);
+        addVehicleTypeMetrics(reportData, timePeriod, start, end);
+        addPricingTierMetrics(reportData, timePeriod, start, end);
         addTrendsAndAdvancedMetrics(reportData, timePeriod, start, end);
 
         return reportData;
@@ -151,6 +153,16 @@ public class ReportDataServiceImpl implements ReportDataService {
         reportData.put("rentalTrends", metricsService.getRentalTrends(period, start, end));
         double avgDuration = metricsService.getAverageRentalDuration(period, start, end);
         reportData.put("averageRentalDuration", Math.round(avgDuration));
+    }
+
+    private void addVehicleTypeMetrics(Map<String, Object> reportData, ReportingConstants.TimePeriod period, LocalDate start, LocalDate end) {
+        reportData.put("rentalsByVehicleType", metricsService.getRentalsCountByVehicleType(period, start, end));
+        reportData.put("revenueByVehicleType", metricsService.getRevenueByVehicleType(period, start, end));
+    }
+
+    private void addPricingTierMetrics(Map<String, Object> reportData, ReportingConstants.TimePeriod period, LocalDate start, LocalDate end) {
+        reportData.put("rentalsByPricingTier", metricsService.getRentalsCountByPricingTier(period, start, end));
+        reportData.put("revenueByPricingTier", metricsService.getRevenueByPricingTier(period, start, end));
     }
 
     @Override
