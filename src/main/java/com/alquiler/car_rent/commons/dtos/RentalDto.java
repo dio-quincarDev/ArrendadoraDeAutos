@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import com.alquiler.car_rent.commons.enums.RentalStatus;
+import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -29,6 +30,10 @@ public class RentalDto {
     private String vehicleModel;
     private String vehicleBrand;
     private RentalStatus rentalStatus;
+    private String vehicleType;
+    private String pricingTier;
+    private BigDecimal dailyRate;
+    private PricingTier chosenPricingTier;
     
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     @NotNull(message = "Fecha de inicio es requerida")
@@ -85,5 +90,21 @@ public class RentalDto {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setVehicleType(String vehicleType) {
+        this.vehicleType = vehicleType;
+    }
+
+    public void setPricingTier(String pricingTier) {
+        this.pricingTier = pricingTier;
+    }
+
+    public void setDailyRate(BigDecimal dailyRate) {
+        this.dailyRate = dailyRate != null ? dailyRate.setScale(2, RoundingMode.HALF_UP) : null;
+    }
+
+    public void setChosenPricingTier(PricingTier chosenPricingTier) {
+        this.chosenPricingTier = chosenPricingTier;
     }
 }

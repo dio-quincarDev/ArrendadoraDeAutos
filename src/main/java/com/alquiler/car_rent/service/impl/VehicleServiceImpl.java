@@ -55,11 +55,13 @@ public class VehicleServiceImpl implements VehicleService {
 	public VehicleDto updateVehicle(Long id, VehicleDto vehicleDto) {
 		return vehicleRepository.findById(id)
 				.map(existingVehicle-> {
-					existingVehicle.setBrand(vehicleDto.brand());
-					existingVehicle.setModel(vehicleDto.model());
-					existingVehicle.setYear(vehicleDto.year());
-					existingVehicle.setPlate(vehicleDto.plate());
-					existingVehicle.setStatus(vehicleDto.status());
+					existingVehicle.setBrand(vehicleDto.getBrand());
+					existingVehicle.setModel(vehicleDto.getModel());
+					existingVehicle.setYear(vehicleDto.getYear());
+					existingVehicle.setPlate(vehicleDto.getPlate());
+					existingVehicle.setStatus(vehicleDto.getStatus());
+                    existingVehicle.setVehicleType(vehicleDto.getVehicleType());
+                    existingVehicle.setPricingTier(vehicleDto.getPricingTier());
 					vehicleRepository.save(existingVehicle);
 					return vehicleMapper.vehicleToDto(vehicleRepository.save(existingVehicle));
 				})

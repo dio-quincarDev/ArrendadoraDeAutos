@@ -2,7 +2,9 @@ package com.alquiler.car_rent.commons.entities;
 
 import java.time.LocalDateTime;
 
+import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
+import com.alquiler.car_rent.commons.enums.VehicleType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Column;
@@ -46,6 +48,14 @@ public class Vehicle {
 	
 	@Enumerated(EnumType.STRING)
 	private VehicleStatus status;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "vehicle_type", nullable = false)
+	private VehicleType vehicleType;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "pricing_tier", nullable = false)
+	private PricingTier pricingTier;
 	
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm")
 	private LocalDateTime createdAt;
