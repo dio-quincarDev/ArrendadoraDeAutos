@@ -157,8 +157,7 @@
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>4.0.1</version>
-        </dependency>
+            </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
@@ -221,6 +220,20 @@
             <artifactId>twilio</artifactId>
             <version>9.14.0</version>
         </dependency>
+
+        <!-- Vonage SDK -->
+        <dependency>
+            <groupId>com.vonage</groupId>
+            <artifactId>server-sdk</artifactId>
+            <version>9.3.1</version>
+        </dependency>
+        
+        <!--Websockets-->
+        <dependency>
+        	<groupId>org.springframework.boot</groupId>
+        	<artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        
     </dependencies>
 
     <build>
@@ -228,7 +241,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>

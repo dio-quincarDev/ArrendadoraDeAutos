@@ -1,15 +1,15 @@
 package com.alquiler.car_rent.service.impl;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.alquiler.car_rent.commons.dtos.CustomerDto;
 import com.alquiler.car_rent.commons.entities.Customer;
 import com.alquiler.car_rent.commons.mappers.CustomerMapper;
+import com.alquiler.car_rent.exceptions.BadRequestException;
+import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.service.CustomerService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -32,8 +32,10 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public Optional<CustomerDto> findCustomerById(Long id) {
-		return customerRepository.findById(id).map(customerMapper::customerToDto);
+	public CustomerDto findCustomerById(Long id) {
+		return customerRepository.findById(id)
+                .map(customerMapper::customerToDto)
+                .orElseThrow(() -> new NotFoundException("Cliente no encontrado con ID: " + id));
 	}
 
 	
@@ -41,7 +43,7 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	public CustomerDto createCustomer(CustomerDto customerDto) {
 		if (customerRepository.existsByEmail(customerDto.email())) {
-            throw new IllegalArgumentException("El correo ya está registrado.");
+            throw new BadRequestException("El correo ya está registrado.");
         }
 		Customer customer = customerMapper.dtoToCustomer(customerDto);
         return customerMapper.customerToDto(customerRepository.save(customer));
@@ -59,15 +61,16 @@ public class CustomerServiceImpl implements CustomerService {
 	                    customerRepository.save(existingCustomer);
 	                    return customerMapper.customerToDto(customerRepository.save(existingCustomer));
 	                })
-	                .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado con ID: " + id));
+	                .orElseThrow(() -> new NotFoundException("Cliente no encontrado con ID: " + id));
 	}
 	
 
 	@Override
-	public void deleteCustomer(Long id) {     if (!customerRepository.existsById(id)) {
-        throw new IllegalArgumentException("Cliente no encontrado con ID: " + id);
-    }
-    customerRepository.deleteById(id);
+	public void deleteCustomer(Long id) {
+        if (!customerRepository.existsById(id)) {
+            throw new NotFoundException("Cliente no encontrado con ID: " + id);
+        }
+        customerRepository.deleteById(id);
     
 	}
 

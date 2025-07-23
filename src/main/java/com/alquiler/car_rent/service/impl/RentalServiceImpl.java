@@ -1,26 +1,26 @@
 package com.alquiler.car_rent.service.impl;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-
-import com.alquiler.car_rent.service.PricingService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.alquiler.car_rent.commons.dtos.RentalDto;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.RentalStatus;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.RentalMapper;
+import com.alquiler.car_rent.exceptions.BadRequestException;
 import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.CustomerRepository;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.repositories.VehicleRepository;
+import com.alquiler.car_rent.service.PricingService;
 import com.alquiler.car_rent.service.RentalService;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 public class RentalServiceImpl implements RentalService{
@@ -51,16 +51,17 @@ public class RentalServiceImpl implements RentalService{
 
 	@Override
 	@Transactional(readOnly = true)
-	public Optional<RentalDto> findRentalById(Long id) {
-		
-		return rentalRepository.findById(id).map(rentalMapper::rentalToDto);
+	public RentalDto findRentalById(Long id) {
+		return rentalRepository.findById(id)
+                .map(rentalMapper::rentalToDto)
+                .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
 
 	@Override
 	public RentalDto createRental(RentalDto rentalDto) {
 		
 		if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
-			throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+			throw new BadRequestException("La fecha de inicio no puede ser posterior a la fecha de fin.");
 		}
 
 		
@@ -77,13 +78,13 @@ public class RentalServiceImpl implements RentalService{
 
 	    // Validar disponibilidad
 	    if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
-	        throw new IllegalArgumentException("El vehiculo no está disponible para alquiler");
+	        throw new BadRequestException("El vehiculo no está disponible para alquiler");
 	    }
 
 		// --- INICIO DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
 		// Validar que el chosenPricingTier no sea nulo
 		if (rentalDto.getChosenPricingTier() == null) {
-			throw new IllegalArgumentException("El nivel de precios elegido (chosenPricingTier) es requerido.");
+			throw new BadRequestException("El nivel de precios elegido (chosenPricingTier) es requerido.");
 		}
 
 		BigDecimal dailyRate = pricingService.calculateDailyRate(vehicle.getVehicleType(), rentalDto.getChosenPricingTier());
@@ -117,7 +118,7 @@ public class RentalServiceImpl implements RentalService{
 		return rentalRepository.findById(id)
                 .map(existingRental -> {
                 	if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
-                		  throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+                		  throw new BadRequestException("La fecha de inicio no puede ser posterior a la fecha de fin.");
                 		}
 
                     boolean datesChanged = !existingRental.getStartDate().equals(rentalDto.getStartDate()) ||
@@ -175,5 +176,21 @@ public class RentalServiceImpl implements RentalService{
 	        }
 	        rentalRepository.deleteById(id);
 	    }
+
+	@Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 ms)
+	@Transactional
+	public void completeExpiredRentals() {
+	    List<Rental> expiredRentals = rentalRepository.findByRentalStatusAndEndDateBefore(RentalStatus.ACTIVE, LocalDateTime.now());
+
+	    for (Rental rental : expiredRentals) {
+	        rental.setRentalStatus(RentalStatus.COMPLETED);
+	        Vehicle vehicle = rental.getVehicle();
+	        if (vehicle != null) {
+	            vehicle.setStatus(VehicleStatus.AVAILABLE);
+	            vehicleRepository.save(vehicle);
+	        }
+	        rentalRepository.save(rental);
+	    }
+	}
 
 }

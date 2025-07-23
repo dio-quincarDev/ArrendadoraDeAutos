@@ -1,7 +1,10 @@
-
 spring:
   application:
     name: car_rent
+    initial-admin:
+     username: New Test
+     password: test1
+     email: test1@gmail.com
   flyway:
     enabled: true
     locations: classpath:db/migrations
@@ -23,23 +26,33 @@ spring:
     static-path-pattern: /static/**
 
 twilio:
-  account:
-    sid: AC27a700d98e81cf2ab213ec3f4a3c14a6
-  auth:
-    token: 317d3dec6ed226d15aacbc62dc97b5e8
-  phone:
-    number: +12766885567
+  account-sid: AC27a700d98e81cf2ab213ec3f4a3c14a6
+  auth-token: 317d3dec6ed226d15aacbc62dc97b5e8
+  phone-number: +12766885567
+  enabled: true
 jwt:
   secret: TMy6jvnM8uXem/ZUkLaMZNFiLODcKF/E5CMGizcp8vNmTILlFSjuKZP45rup83ii72ybBq6Uh5kBGSQe32Pevg==
   header: Authorization
   prefix: Bearer
   expiration-time: 86400000
+vonage:
+  api-key: b46b269d
+  api-secret: ZarIvan20
+  from-number: 50768429447
+
+sms:
+  provider: vonage
 
 logging:
   level:
-    org:
-      springframework:
-        security: DEBUG
-        web: DEBUG
-        org.flywaydb: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.flywaydb: DEBUG
 
+springdoc:
+  swagger-ui:
+    doc-expansion: none
+    tags-sorter: alpha
+    operations-sorter: alpha
