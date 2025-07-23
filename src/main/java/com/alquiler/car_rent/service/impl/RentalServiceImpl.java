@@ -13,6 +13,7 @@ import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.PricingService;
 import com.alquiler.car_rent.service.RentalService;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,5 +176,21 @@ public class RentalServiceImpl implements RentalService{
 	        }
 	        rentalRepository.deleteById(id);
 	    }
+
+	@Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 ms)
+	@Transactional
+	public void completeExpiredRentals() {
+	    List<Rental> expiredRentals = rentalRepository.findByRentalStatusAndEndDateBefore(RentalStatus.ACTIVE, LocalDateTime.now());
+
+	    for (Rental rental : expiredRentals) {
+	        rental.setRentalStatus(RentalStatus.COMPLETED);
+	        Vehicle vehicle = rental.getVehicle();
+	        if (vehicle != null) {
+	            vehicle.setStatus(VehicleStatus.AVAILABLE);
+	            vehicleRepository.save(vehicle);
+	        }
+	        rentalRepository.save(rental);
+	    }
+	}
 
 }

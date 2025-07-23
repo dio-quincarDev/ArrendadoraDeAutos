@@ -45,11 +45,11 @@ sms:
 
 logging:
   level:
-    org:
-      springframework:
-        security: DEBUG
-        web: DEBUG
-        org.flywaydb: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.flywaydb: DEBUG
 
 springdoc:
   swagger-ui:

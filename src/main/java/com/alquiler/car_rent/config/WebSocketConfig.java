@@ -14,8 +14,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer{
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint("/admin-alerts")
-		.setAllowedOriginPatterns("*")
-		.withSockJS();
+		.setAllowedOriginPatterns("*");
+		// .withSockJS(); // Deshabilitado para pruebas con clientes WebSocket nativos como Postman
 	}
 	
 	@Override
