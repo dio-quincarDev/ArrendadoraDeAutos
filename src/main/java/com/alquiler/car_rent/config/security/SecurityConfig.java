@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,7 +47,7 @@ public class SecurityConfig {
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher(ApiPathConstants.V1_ROUTE + "/**")
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Endpoints públicos de la API
@@ -58,19 +59,19 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // Endpoints exclusivos para ADMIN
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasRole("ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasRole("ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasRole("ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                 // Endpoints para USERS y ADMIN
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("USERS", "ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
 
                 // Cualquier otra solicitud requiere autenticación
                 .anyRequest().authenticated()

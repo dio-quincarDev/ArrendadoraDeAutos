@@ -102,14 +102,12 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Transactional
     public UserEntity updateUserRole(Long id, Role newRole) {
         UserEntity userToUpdate = getUserById(id);
-        String authenticatedUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        String initialAdminUsername = env.getProperty("application.initial-admin.username");
 
-        // Logic to prevent non-initial admins from promoting/demoting other admins
-        if (newRole == Role.ADMIN || userToUpdate.getRole() == Role.ADMIN) {
-            if (!authenticatedUsername.equals(initialAdminUsername)) {
-                throw new BadRequestException("Solo el administrador inicial puede modificar roles de administrador.");
-            }
+        boolean isUserSuperAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_SUPER_ADMIN"));
+
+        if ((newRole == Role.ADMIN || userToUpdate.getRole() == Role.ADMIN || newRole == Role.SUPER_ADMIN || userToUpdate.getRole() == Role.SUPER_ADMIN) && !isUserSuperAdmin) {
+            throw new BadRequestException("Solo un SUPER_ADMIN puede modificar roles de administrador o superior.");
         }
 
         userToUpdate.setRole(newRole);
