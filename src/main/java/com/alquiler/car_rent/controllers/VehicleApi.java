@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 		name = "Vehicle Management",
 		description = "Operaciones CRUD para la gestión de vehículos en el sistema de alquiler"
 )
-@RequestMapping(ApiPathConstants.V1_ROUTE + "/vehicles")
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE)
 public interface VehicleApi {
 
 	@Operation(

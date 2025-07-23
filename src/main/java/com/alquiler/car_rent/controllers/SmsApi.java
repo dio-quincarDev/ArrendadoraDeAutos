@@ -1,5 +1,6 @@
 package com.alquiler.car_rent.controllers;
 
+import com.alquiler.car_rent.commons.constants.ApiPathConstants;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 		name = "SMS Service",
 		description = "Endpoints para el envío de mensajes SMS a clientes"
 )
-@RequestMapping("/v1/sms")
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE)
 public interface SmsApi {
 
 	@Operation(

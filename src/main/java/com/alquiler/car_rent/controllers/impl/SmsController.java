@@ -1,25 +1,24 @@
 package com.alquiler.car_rent.controllers.impl;
 
+import com.alquiler.car_rent.service.impl.SmsServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alquiler.car_rent.controllers.SmsApi;
-import com.alquiler.car_rent.service.SmsService;
 
 @RestController
 public class SmsController implements SmsApi {
 	
-	private final SmsService smsService;
+	private final SmsServiceImpl smsService;
 	
-	public SmsController(SmsService smsService) {
+	public SmsController(SmsServiceImpl smsService) {
 		this.smsService = smsService;
-		
 	}
 
 	@Override
 	public ResponseEntity<String> sendSms(String to, String message) {
 		smsService.sendSms(to, message);
-		return ResponseEntity.ok("Sms Enviado con exito a " + to);
+		return ResponseEntity.ok("Solicitud de envío de SMS procesada para " + to);
 	}
 
 }

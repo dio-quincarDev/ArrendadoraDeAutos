@@ -105,11 +105,15 @@ public class AuthServiceImpl implements AuthService {
 		log.debug("Mapeando DTO a Entidad con Rol: {}", requestedRole);
 
 		// Construir la entidad pasando el objeto Role directamente.
-		return UserEntity.builder()
+				return UserEntity.builder()
 				.email(userEntityRequest.getEmail())
 				.password(passwordEncoder.encode(userEntityRequest.getPassword()))
 				.role(requestedRole) // Pasamos el objeto Role obtenido del DTO (o el defecto)
 				.username(userEntityRequest.getUsername())
+				.enabled(true)
+				.accountNonExpired(true)
+				.accountNonLocked(true)
+				.credentialsNonExpired(true)
 				.build();
 	}
 }

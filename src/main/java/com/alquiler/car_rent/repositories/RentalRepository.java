@@ -187,4 +187,6 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    List<Rental> findByRentalStatusAndEndDateBefore(RentalStatus status, LocalDateTime endDate);
 }

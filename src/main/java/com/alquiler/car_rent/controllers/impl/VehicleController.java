@@ -1,13 +1,15 @@
 package com.alquiler.car_rent.controllers.impl;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.alquiler.car_rent.commons.dtos.VehicleDto;
 import com.alquiler.car_rent.controllers.VehicleApi;
 import com.alquiler.car_rent.service.VehicleService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class VehicleController implements VehicleApi {
@@ -19,9 +21,9 @@ public class VehicleController implements VehicleApi {
 	    }
 
 	@Override
-	public ResponseEntity<VehicleDto> createVehicle(VehicleDto vehicleDto) {
+	public ResponseEntity<VehicleDto> createVehicle(@Valid @RequestBody VehicleDto vehicleDto) {
 		VehicleDto createdVehicle = vehicleService.createVehicle(vehicleDto);
-		return ResponseEntity.ok(createdVehicle);
+		return new ResponseEntity<>(createdVehicle, HttpStatus.CREATED);
 	}
 
 	@Override
@@ -32,13 +34,12 @@ public class VehicleController implements VehicleApi {
 
 	@Override
 	public ResponseEntity<VehicleDto> getVehicleById(Long id) {
-		return vehicleService.findVehicleById(id)
-				.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		VehicleDto vehicleDto = vehicleService.findVehicleById(id);
+		return ResponseEntity.ok(vehicleDto);
 	}
 
 	@Override
-	public ResponseEntity<VehicleDto> updateVehicle(Long id, VehicleDto vehicleDto) {
+	public ResponseEntity<VehicleDto> updateVehicle(Long id, @Valid @RequestBody VehicleDto vehicleDto) {
 		VehicleDto updatedVehicle = vehicleService.updateVehicle(id, vehicleDto);
 		return ResponseEntity.ok(updatedVehicle);
 	}

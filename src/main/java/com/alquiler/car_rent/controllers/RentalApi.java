@@ -30,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 		name = "Rental Management",
 		description = "Operaciones para gestionar alquileres de vehículos"
 )
-@RequestMapping(ApiPathConstants.V1_ROUTE + "/rentals")
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE)
 public interface RentalApi {
 
 	@Operation(

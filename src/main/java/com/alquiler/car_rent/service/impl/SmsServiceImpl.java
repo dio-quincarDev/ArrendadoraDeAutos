@@ -1,44 +1,43 @@
 package com.alquiler.car_rent.service.impl;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.alquiler.car_rent.config.SmsProviderConfig;
+import com.alquiler.car_rent.service.SmsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.alquiler.car_rent.service.SmsService;
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-
-import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
-public class SmsServiceImpl implements SmsService{
+public class SmsServiceImpl {
 
-	@Value("${twilio.account.sid}")
-    private String accountSid;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SmsServiceImpl.class);
 
-    @Value("${twilio.auth.token}")
-    private String authToken;
+    private final SmsProvider activeProvider;
 
-    @Value("${twilio.phone.number}")
-    private String fromPhoneNumber;
-    
-    
-    @PostConstruct
-    public void init() {
-    	 if (accountSid == null || authToken == null || fromPhoneNumber == null) {
-             throw new IllegalStateException("Las credenciales de Twilio no están configuradas correctamente.");
-         }
-        Twilio.init(accountSid, authToken);
+    public SmsServiceImpl(SmsProviderConfig providerConfig, List<SmsProvider> smsProviders) {
+        Map<String, SmsProvider> providerMap = smsProviders.stream()
+                .collect(Collectors.toMap(SmsProvider::getProviderName, Function.identity()));
+
+        String providerName = providerConfig.getProvider();
+        this.activeProvider = providerMap.get(providerName);
+
+        if (this.activeProvider != null) {
+            LOGGER.info("Proveedor de SMS activo: {}", this.activeProvider.getProviderName());
+        } else {
+            LOGGER.error("No se encontró un proveedor de SMS para el nombre: {}. El envío de SMS no funcionará.", providerName);
+            // Considera lanzar una excepción aquí si el envío de SMS es crítico
+        }
     }
- 
 
-	@Override
-	public void sendSms(String to, String message) {
-		
-		Message.creator(
-                new com.twilio.type.PhoneNumber(to),
-                new com.twilio.type.PhoneNumber(fromPhoneNumber),
-                message
-        ).create();
-	}
-
+    public void sendSms(String to, String text) {
+        if (activeProvider == null) {
+            LOGGER.warn("No hay un proveedor de SMS activo. No se puede enviar el mensaje.");
+            return;
+        }
+        activeProvider.sendSms(to, text);
+    }
 }

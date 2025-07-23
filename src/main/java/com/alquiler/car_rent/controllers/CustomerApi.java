@@ -30,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 		name = "Customer Management",
 		description = "Operaciones CRUD para la gestión de clientes"
 )
-@RequestMapping(ApiPathConstants.V1_ROUTE + "/customers")
+@RequestMapping(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE)
 public interface CustomerApi {
 
 	@Operation(
