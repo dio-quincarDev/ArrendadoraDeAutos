@@ -62,7 +62,7 @@ Este proyecto está diseñado siguiendo principios de software de alta calidad p
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone https://github.com/tu-usuario/car_rent.git
+    git clone hhttps://github.com/dio-quincarDev/ArrendadoraDeAutos.git
     cd car_rent
     ```
 

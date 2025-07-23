@@ -1,7 +1,7 @@
 package com.alquiler.car_rent.commons.enums;
 
 public enum Role {
-	ADMIN,
-	USERS
-
+    SUPER_ADMIN,
+    ADMIN,
+    USERS
 }
