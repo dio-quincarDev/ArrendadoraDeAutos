@@ -61,7 +61,7 @@ public interface CustomerApi {
 			}
 	)
 	@PostMapping
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USERS')")
 	ResponseEntity<CustomerDto> createCustomer(@RequestBody CustomerDto customerDto);
 
 	@Operation(
@@ -81,7 +81,7 @@ public interface CustomerApi {
 			}
 	)
 	@GetMapping
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<List<CustomerDto>> getAllCustomers();
 
 	@Operation(
@@ -112,7 +112,7 @@ public interface CustomerApi {
 			}
 	)
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<CustomerDto> getCustomerById(
 			@Parameter(
 					name = "id",
@@ -152,7 +152,7 @@ public interface CustomerApi {
 			}
 	)
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<CustomerDto> updateCustomer(
 			@Parameter(
 					name = "id",
@@ -192,7 +192,7 @@ public interface CustomerApi {
 			}
 	)
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 	ResponseEntity<Void> deleteCustomer(
 			@Parameter(
 					name = "id",
