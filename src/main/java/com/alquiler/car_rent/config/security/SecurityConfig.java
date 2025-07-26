@@ -58,20 +58,17 @@ public class SecurityConfig {
                 // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Endpoints exclusivos para ADMIN
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                // Endpoints de la API
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
 
-                // Endpoints para USERS y ADMIN
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("USERS", "ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE).hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
+                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
 
                 // Cualquier otra solicitud requiere autenticación
                 .anyRequest().authenticated()

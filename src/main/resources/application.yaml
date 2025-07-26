@@ -2,9 +2,10 @@ spring:
   application:
     name: car_rent
     initial-admin:
-     username: New Test
-     password: test1
-     email: test1@gmail.com
+     username: ${INIT_ADMIN_USER}
+     email: ${INIT_ADMIN_EMAIL}
+     password: ${INIT_ADMIN_PASS}
+
   flyway:
     enabled: true
     locations: classpath:db/migrations
@@ -12,9 +13,9 @@ spring:
     validate-on-migrate: true
     out-of-order: false
   datasource:
-    url: jdbc:mysql://localhost:3306/arrendadora2
-    username: root
-    password: diogenes
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update # Crea/actualiza el esquema de la base de datos
@@ -26,19 +27,19 @@ spring:
     static-path-pattern: /static/**
 
 twilio:
-  account-sid: AC27a700d98e81cf2ab213ec3f4a3c14a6
-  auth-token: 317d3dec6ed226d15aacbc62dc97b5e8
-  phone-number: +12766885567
+  account-sid: ${TWILIO_SID}
+  auth-token: ${TWILIO_TOKEN}
+  phone-number: ${TWILIO_PHONE}
   enabled: true
 jwt:
-  secret: TMy6jvnM8uXem/ZUkLaMZNFiLODcKF/E5CMGizcp8vNmTILlFSjuKZP45rup83ii72ybBq6Uh5kBGSQe32Pevg==
+  secret: ${JWT_SECRET}
   header: Authorization
   prefix: Bearer
   expiration-time: 86400000
 vonage:
-  api-key: b46b269d
-  api-secret: ZarIvan20
-  from-number: 50768429447
+  api-key: ${VONAGE_API_KEY}
+  api-secret: ${VONAGE_API_SECRET}
+  from-number: ${VONAGE_PHONE}
 
 sms:
   provider: vonage

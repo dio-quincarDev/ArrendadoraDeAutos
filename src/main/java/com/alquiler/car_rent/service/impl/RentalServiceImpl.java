@@ -21,9 +21,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class RentalServiceImpl implements RentalService{
+	private static final Logger logger = LoggerFactory.getLogger(RentalServiceImpl.class);
 	private final RentalRepository rentalRepository;
 	private final VehicleRepository vehicleRepository;
 	private final CustomerRepository customerRepository;
@@ -98,7 +101,7 @@ public class RentalServiceImpl implements RentalService{
 		// --- FIN DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
 
 
-	      //Actualiza el estado del vehiculo
+	      //Actualiza el estado del vehículo
 	      vehicle.setStatus(VehicleStatus.RENTED);
 	      vehicleRepository.save(vehicle);
 	      
@@ -152,17 +155,20 @@ public class RentalServiceImpl implements RentalService{
                 })
                 .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
-	
-	
+
 	@Override
+	@Transactional
 	public RentalDto cancelRental(Long id) {
 	    return rentalRepository.findById(id)
 	            .map(rental -> {
-	            	 Vehicle vehicle = rental.getVehicle();
-	                 vehicle.setStatus(VehicleStatus.AVAILABLE);
-	                 vehicleRepository.save(vehicle);
-	            	
+	                Vehicle vehicle = rental.getVehicle();
+	                if (vehicle != null) {
+	                    vehicle.setStatus(VehicleStatus.AVAILABLE);
+	                    vehicleRepository.save(vehicle);
+	                }
 	                rental.setRentalStatus(RentalStatus.CANCELLED);
+	                rental.setTotalPrice(BigDecimal.ZERO); // Restablecer el precio a cero
+	                logger.info("Antes de guardar - Rental ID: {}, TotalPrice: {}, RentalStatus: {}", rental.getId(), rental.getTotalPrice(), rental.getRentalStatus());
 	                return rentalMapper.rentalToDto(rentalRepository.save(rental));
 	            })
 	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
@@ -170,12 +176,18 @@ public class RentalServiceImpl implements RentalService{
 
 
 	@Override
+	@Transactional
 	public void deleteRental(Long id) {
-	     if (!rentalRepository.existsById(id)) {
-	            throw new NotFoundException("Alquiler no encontrado con ID: " + id);
-	        }
-	        rentalRepository.deleteById(id);
+	    Rental rental = rentalRepository.findById(id)
+	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+
+	    Vehicle vehicle = rental.getVehicle();
+	    if (vehicle != null) {
+	        vehicle.setStatus(VehicleStatus.AVAILABLE);
+	        vehicleRepository.save(vehicle);
 	    }
+	    rentalRepository.delete(rental);
+	}
 
 	@Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 ms)
 	@Transactional
