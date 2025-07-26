@@ -69,7 +69,7 @@ public interface VehicleApi {
 			}
 	)
 	@PostMapping
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USERS')")
 	ResponseEntity<VehicleDto> createVehicle(
 			@RequestBody VehicleDto vehicleDto
 	);
@@ -163,7 +163,7 @@ public interface VehicleApi {
 			}
 	)
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('USERS', 'ADMIN', 'SUPER_ADMIN')")
 	ResponseEntity<VehicleDto> updateVehicle(
 			@Parameter(
 					name = "id",
@@ -207,7 +207,7 @@ public interface VehicleApi {
 			}
 	)
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 	ResponseEntity<Void> deleteVehicle(
 			@Parameter(
 					name = "id",

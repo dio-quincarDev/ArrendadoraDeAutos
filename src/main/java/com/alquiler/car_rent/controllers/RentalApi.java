@@ -75,7 +75,7 @@ public interface RentalApi {
 			}
 	)
 	@PostMapping
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<RentalDto> createRental(@RequestBody RentalDto rentalDto);
 
 	@Operation(
@@ -91,7 +91,7 @@ public interface RentalApi {
 			}
 	)
 	@GetMapping
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<List<RentalDto>> getAllRentals();
 
 	@Operation(
@@ -118,7 +118,7 @@ public interface RentalApi {
 			}
 	)
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<RentalDto> getRentalById(
 			@Parameter(
 					name = "id",
@@ -165,7 +165,7 @@ public interface RentalApi {
 			}
 	)
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<RentalDto> updateRental(
 			@Parameter(
 					name = "id",
@@ -202,7 +202,7 @@ public interface RentalApi {
 			}
 	)
 	@PutMapping("/{id}/cancel")
-	@PreAuthorize("hasAnyRole('USERS', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
 	ResponseEntity<RentalDto> cancelRental(
 			@Parameter(
 					name = "id",
@@ -237,7 +237,7 @@ public interface RentalApi {
 			}
 	)
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 	ResponseEntity<Void> deleteRental(
 			@Parameter(
 					name = "id",

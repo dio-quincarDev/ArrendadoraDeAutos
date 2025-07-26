@@ -78,7 +78,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping(produces = "application/json")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Map<String, Object>> getDashboardData(
             @RequestParam(defaultValue = "MONTHLY") ReportingConstants.TimePeriod period,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -150,7 +150,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/export")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<byte[]> exportReport(
             @RequestParam(defaultValue = "PDF") ReportingConstants.OutputFormat format,
             @RequestParam(defaultValue = "RENTAL_SUMMARY") ReportingConstants.ReportType reportType,
@@ -182,7 +182,7 @@ public interface ReportingApi {
             }
     )
     @PostMapping("/export-metrics")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<byte[]> exportMetrics(@RequestBody ExportMetricsRequest request);
 
     @Operation(
@@ -201,7 +201,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/total-rentals")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Long> getTotalRentalsMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -224,7 +224,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/total-revenue")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Double> getTotalRevenueMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -247,7 +247,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/unique-vehicles")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Long> getUniqueVehiclesRentedMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -284,7 +284,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/most-rented-vehicle")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Map<String, Object>> getMostRentedVehicleMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -307,7 +307,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/new-customers")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<Long> getNewCustomersCountMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -351,7 +351,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/rental-trends")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<List<Map<String, Object>>> getRentalTrendsMetric(
             @RequestParam(value = "period", required = false) ReportingConstants.TimePeriod period,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -395,7 +395,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/vehicle-usage")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<List<Map<String, Object>>> getVehicleUsageMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -437,7 +437,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/average-rental-duration")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<List<Map<String, Object>>> getAverageRentalDurationMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -481,7 +481,7 @@ public interface ReportingApi {
             }
     )
     @GetMapping("/metrics/top-customers")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     ResponseEntity<List<Map<String, Object>>> getTopCustomersMetric(
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,

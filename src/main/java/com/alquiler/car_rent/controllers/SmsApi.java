@@ -66,7 +66,7 @@ public interface SmsApi {
 			}
 	)
 	@PostMapping("/send")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
 	ResponseEntity<String> sendSms(
 			@Parameter(
 					name = "to",
