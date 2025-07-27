@@ -25,6 +25,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     WHERE
         (:start IS NULL OR r.endDate >= :start)
         AND (:end IS NULL OR r.startDate <= :end)
+        AND r.rentalStatus != 'CANCELLED'
 """)
 
     Page<Rental> searchByDateRange(
@@ -38,7 +39,8 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
         SELECT COUNT(r) FROM Rental r
         WHERE
             (:start IS NULL OR r.startDate <= :end) AND
-            (:end IS NULL OR r.endDate >= :start)
+            (:end IS NULL OR r.endDate >= :start) AND
+            r.rentalStatus != 'CANCELLED'
     """)
     long countByDateRange(
             @Param("start") LocalDateTime start,
@@ -52,7 +54,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
         COUNT(r) AS rentalCount,
         SUM(r.totalPrice) AS totalRevenue 
     FROM Rental r 
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY period 
     ORDER BY period
 """)
@@ -65,7 +67,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
         SELECT COALESCE(SUM(r.totalPrice), 0.0)
         FROM Rental r
-        WHERE r.startDate <= :end AND r.endDate >= :start
+        WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     """)
     double getTotalRevenueInRange(
             @Param("start") LocalDateTime start,
@@ -80,7 +82,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     FROM Rental r
     JOIN r.customer c
     WHERE r.startDate <= :end AND r.endDate >= :start
-        AND c.id IN :customerIds
+        AND c.id IN :customerIds AND r.rentalStatus != 'CANCELLED'
     GROUP BY c.name
 """)
     List<Object[]> findAverageDurationByCustomer(
@@ -94,7 +96,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     SELECT v.id AS vehicleId, v.brand AS brand, v.model AS model, COUNT(r) AS usageCount 
     FROM Rental r 
     JOIN r.vehicle v 
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY v.id, v.brand, v.model 
 """)
     List<Map<String, Object>> findVehicleUsage(
@@ -110,7 +112,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     COUNT(r) AS rentalCount
     FROM Rental r
     JOIN r.vehicle v
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY v.brand, v.model
     ORDER BY rentalCount DESC
     """)
@@ -128,7 +130,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     	        SUM(r.totalPrice) AS revenue
     	    FROM Rental r
     	    JOIN r.customer c
-    	    WHERE r.startDate <= :end AND r.endDate >= :start
+    	    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     	    GROUP BY c.id, c.name
     	    ORDER BY rentals DESC
     	""")
@@ -143,7 +145,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     SELECT v.vehicleType AS vehicleType, COUNT(r) AS rentalCount
     FROM Rental r
     JOIN r.vehicle v
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY v.vehicleType
     """)
     List<Map<String, Object>> findRentalCountsByVehicleType(
@@ -156,7 +158,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     SELECT v.vehicleType AS vehicleType, SUM(r.totalPrice) AS totalRevenue
     FROM Rental r
     JOIN r.vehicle v
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY v.vehicleType
     """)
     List<Map<String, Object>> findRevenueByVehicleType(
@@ -168,7 +170,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
     SELECT r.chosenPricingTier AS pricingTier, COUNT(r) AS rentalCount
     FROM Rental r
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY r.chosenPricingTier
     """)
     List<Map<String, Object>> findRentalCountsByPricingTier(
@@ -180,7 +182,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
     SELECT r.chosenPricingTier AS pricingTier, SUM(r.totalPrice) AS totalRevenue
     FROM Rental r
-    WHERE r.startDate <= :end AND r.endDate >= :start
+    WHERE r.startDate <= :end AND r.endDate >= :start AND r.rentalStatus != 'CANCELLED'
     GROUP BY r.chosenPricingTier
     """)
     List<Map<String, Object>> findRevenueByPricingTier(

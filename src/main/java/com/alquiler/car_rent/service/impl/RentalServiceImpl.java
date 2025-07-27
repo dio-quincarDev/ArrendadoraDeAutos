@@ -25,27 +25,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
-public class RentalServiceImpl implements RentalService{
+public class RentalServiceImpl implements RentalService {
 	private static final Logger logger = LoggerFactory.getLogger(RentalServiceImpl.class);
 	private final RentalRepository rentalRepository;
 	private final VehicleRepository vehicleRepository;
 	private final CustomerRepository customerRepository;
 	private final RentalMapper rentalMapper;
 	private final PricingService pricingService;
-	
-	public RentalServiceImpl(RentalRepository rentalRepository, VehicleRepository vehicleRepository, 
-			CustomerRepository customerRepository, RentalMapper rentalMapper, PricingService pricingService) {
+
+	public RentalServiceImpl(RentalRepository rentalRepository, VehicleRepository vehicleRepository,
+							 CustomerRepository customerRepository, RentalMapper rentalMapper, PricingService pricingService) {
 		this.rentalRepository = rentalRepository;
 		this.vehicleRepository = vehicleRepository;
 		this.customerRepository = customerRepository;
 		this.rentalMapper = rentalMapper;
 		this.pricingService = pricingService;
 	}
-    
+
 	@Override
 	@Transactional(readOnly = true)
 	public List<RentalDto> findAllRentals() {
-		
+
 		return rentalRepository.findAll()
 				.stream()
 				.map(rentalMapper::rentalToDto)
@@ -56,33 +56,33 @@ public class RentalServiceImpl implements RentalService{
 	@Transactional(readOnly = true)
 	public RentalDto findRentalById(Long id) {
 		return rentalRepository.findById(id)
-                .map(rentalMapper::rentalToDto)
-                .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+				.map(rentalMapper::rentalToDto)
+				.orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
 
 	@Override
 	public RentalDto createRental(RentalDto rentalDto) {
-		
+
 		if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
 			throw new BadRequestException("La fecha de inicio no puede ser posterior a la fecha de fin.");
 		}
 
-		
+
 		Rental rental = rentalMapper.dtoToRental(rentalDto);
-		
-		
-		 // Obtener el Cliente
-	    rental.setCustomer(customerRepository.findById(rentalDto.getCustomerId())
-	        .orElseThrow(() -> new NotFoundException("Cliente No Encontrado por ID: " + rentalDto.getCustomerId())));
 
-	    // Obtener el Vehículo
-	    Vehicle vehicle = vehicleRepository.findById(rentalDto.getVehicleId())
-	        .orElseThrow(() -> new NotFoundException("Vehiculo No Encontrado por ID: " + rentalDto.getVehicleId()));
 
-	    // Validar disponibilidad
-	    if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
-	        throw new BadRequestException("El vehiculo no está disponible para alquiler");
-	    }
+		// Obtener el Cliente
+		rental.setCustomer(customerRepository.findById(rentalDto.getCustomerId())
+				.orElseThrow(() -> new NotFoundException("Cliente No Encontrado por ID: " + rentalDto.getCustomerId())));
+
+		// Obtener el Vehículo
+		Vehicle vehicle = vehicleRepository.findById(rentalDto.getVehicleId())
+				.orElseThrow(() -> new NotFoundException("Vehiculo No Encontrado por ID: " + rentalDto.getVehicleId()));
+
+		// Validar disponibilidad
+		if (vehicle.getStatus() != VehicleStatus.AVAILABLE) {
+			throw new BadRequestException("El vehiculo no está disponible para alquiler");
+		}
 
 		// --- INICIO DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
 		// Validar que el chosenPricingTier no sea nulo
@@ -101,108 +101,107 @@ public class RentalServiceImpl implements RentalService{
 		// --- FIN DE LA LÓGICA DE CÁLCULO DE PRECIOS CENTRALIZADA ---
 
 
-	      //Actualiza el estado del vehículo
-	      vehicle.setStatus(VehicleStatus.RENTED);
-	      vehicleRepository.save(vehicle);
-	      
-	      //Info de Alquiler
-	      rental.setVehicle(vehicle);
-	      rental.setCreatedAt(LocalDateTime.now());
-	      rental.setRentalStatus(RentalStatus.ACTIVE);
-	      
+		//Actualiza el estado del vehículo
+		vehicle.setStatus(VehicleStatus.RENTED);
+		vehicleRepository.save(vehicle);
+
+		//Info de Alquiler
+		rental.setVehicle(vehicle);
+		rental.setCreatedAt(LocalDateTime.now());
+		rental.setRentalStatus(RentalStatus.ACTIVE);
+
 		return rentalMapper.rentalToDto(rentalRepository.save(rental));
 	}
 
-	
 
 	@Override
 	public RentalDto updateRental(Long id, RentalDto rentalDto) {
-		
+
 		return rentalRepository.findById(id)
-                .map(existingRental -> {
-                	if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
-                		  throw new BadRequestException("La fecha de inicio no puede ser posterior a la fecha de fin.");
-                		}
+				.map(existingRental -> {
+					if (rentalDto.getStartDate().isAfter(rentalDto.getEndDate())) {
+						throw new BadRequestException("La fecha de inicio no puede ser posterior a la fecha de fin.");
+					}
 
-                    boolean datesChanged = !existingRental.getStartDate().equals(rentalDto.getStartDate()) ||
-                                           !existingRental.getEndDate().equals(rentalDto.getEndDate());
-                    boolean pricingTierChanged = rentalDto.getChosenPricingTier() != null &&
-                                                 !rentalDto.getChosenPricingTier().equals(existingRental.getChosenPricingTier());
+					boolean datesChanged = !existingRental.getStartDate().equals(rentalDto.getStartDate()) ||
+							!existingRental.getEndDate().equals(rentalDto.getEndDate());
+					boolean pricingTierChanged = rentalDto.getChosenPricingTier() != null &&
+							!rentalDto.getChosenPricingTier().equals(existingRental.getChosenPricingTier());
 
-                    existingRental.setStartDate(rentalDto.getStartDate());
-                    existingRental.setEndDate(rentalDto.getEndDate());
+					existingRental.setStartDate(rentalDto.getStartDate());
+					existingRental.setEndDate(rentalDto.getEndDate());
 
-                    if (rentalDto.getChosenPricingTier() != null) {
-                        existingRental.setChosenPricingTier(rentalDto.getChosenPricingTier());
-                    }
+					if (rentalDto.getChosenPricingTier() != null) {
+						existingRental.setChosenPricingTier(rentalDto.getChosenPricingTier());
+					}
 
-                    if (datesChanged || pricingTierChanged) {
-                        Vehicle vehicle = existingRental.getVehicle();
-                        if (vehicle == null) {
-                            throw new IllegalStateException("Vehículo asociado al alquiler no encontrado.");
-                        }
-                        // Usar el chosenPricingTier de la entidad, que ya fue actualizado si se proporcionó en el DTO
-                        BigDecimal dailyRate = pricingService.calculateDailyRate(vehicle.getVehicleType(), existingRental.getChosenPricingTier());
-                        long rentalDays = ChronoUnit.DAYS.between(existingRental.getStartDate(), existingRental.getEndDate());
-                        if (rentalDays <= 0) {
-                            rentalDays = 1;
-                        }
-                        BigDecimal newTotalPrice = dailyRate.multiply(new BigDecimal(rentalDays));
-                        existingRental.setTotalPrice(newTotalPrice);
-                    }
+					if (datesChanged || pricingTierChanged) {
+						Vehicle vehicle = existingRental.getVehicle();
+						if (vehicle == null) {
+							throw new IllegalStateException("Vehículo asociado al alquiler no encontrado.");
+						}
+						// Usar el chosenPricingTier de la entidad, que ya fue actualizado si se proporcionó en el DTO
+						BigDecimal dailyRate = pricingService.calculateDailyRate(vehicle.getVehicleType(), existingRental.getChosenPricingTier());
+						long rentalDays = ChronoUnit.DAYS.between(existingRental.getStartDate(), existingRental.getEndDate());
+						if (rentalDays <= 0) {
+							rentalDays = 1;
+						}
+						BigDecimal newTotalPrice = dailyRate.multiply(new BigDecimal(rentalDays));
+						existingRental.setTotalPrice(newTotalPrice);
+					}
 
-                    return rentalMapper.rentalToDto(rentalRepository.save(existingRental));
-                })
-                .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+					return rentalMapper.rentalToDto(rentalRepository.save(existingRental));
+				})
+				.orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
 
 	@Override
 	@Transactional
 	public RentalDto cancelRental(Long id) {
-	    return rentalRepository.findById(id)
-	            .map(rental -> {
-	                Vehicle vehicle = rental.getVehicle();
-	                if (vehicle != null) {
-	                    vehicle.setStatus(VehicleStatus.AVAILABLE);
-	                    vehicleRepository.save(vehicle);
-	                }
-	                rental.setRentalStatus(RentalStatus.CANCELLED);
-	                rental.setTotalPrice(BigDecimal.ZERO); // Restablecer el precio a cero
-	                logger.info("Antes de guardar - Rental ID: {}, TotalPrice: {}, RentalStatus: {}", rental.getId(), rental.getTotalPrice(), rental.getRentalStatus());
-	                return rentalMapper.rentalToDto(rentalRepository.save(rental));
-	            })
-	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+		return rentalRepository.findById(id)
+				.map(rental -> {
+					Vehicle vehicle = rental.getVehicle();
+					if (vehicle != null) {
+						vehicle.setStatus(VehicleStatus.AVAILABLE);
+						vehicleRepository.save(vehicle);
+					}
+					rental.setRentalStatus(RentalStatus.CANCELLED);
+					rental.setTotalPrice(BigDecimal.ZERO); // Restablecer el precio a cero
+					logger.info("Antes de guardar - Rental ID: {}, TotalPrice: {}, RentalStatus: {}", rental.getId(), rental.getTotalPrice(), rental.getRentalStatus());
+					return rentalMapper.rentalToDto(rentalRepository.save(rental));
+				})
+				.orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 	}
 
 
 	@Override
 	@Transactional
 	public void deleteRental(Long id) {
-	    Rental rental = rentalRepository.findById(id)
-	            .orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
+		Rental rental = rentalRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException("Alquiler no encontrado con ID: " + id));
 
-	    Vehicle vehicle = rental.getVehicle();
-	    if (vehicle != null) {
-	        vehicle.setStatus(VehicleStatus.AVAILABLE);
-	        vehicleRepository.save(vehicle);
-	    }
-	    rentalRepository.delete(rental);
+		Vehicle vehicle = rental.getVehicle();
+		if (vehicle != null) {
+			vehicle.setStatus(VehicleStatus.AVAILABLE);
+			vehicleRepository.save(vehicle);
+		}
+		rentalRepository.delete(rental);
 	}
 
 	@Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 ms)
 	@Transactional
 	public void completeExpiredRentals() {
-	    List<Rental> expiredRentals = rentalRepository.findByRentalStatusAndEndDateBefore(RentalStatus.ACTIVE, LocalDateTime.now());
+		List<Rental> expiredRentals = rentalRepository.findByRentalStatusAndEndDateBefore(RentalStatus.ACTIVE, LocalDateTime.now());
 
-	    for (Rental rental : expiredRentals) {
-	        rental.setRentalStatus(RentalStatus.COMPLETED);
-	        Vehicle vehicle = rental.getVehicle();
-	        if (vehicle != null) {
-	            vehicle.setStatus(VehicleStatus.AVAILABLE);
-	            vehicleRepository.save(vehicle);
-	        }
-	        rentalRepository.save(rental);
-	    }
+		for (Rental rental : expiredRentals) {
+			rental.setRentalStatus(RentalStatus.COMPLETED);
+			Vehicle vehicle = rental.getVehicle();
+			if (vehicle != null) {
+				vehicle.setStatus(VehicleStatus.AVAILABLE);
+				vehicleRepository.save(vehicle);
+			}
+			rentalRepository.save(rental);
+		}
+
 	}
-
 }
