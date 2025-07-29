@@ -1,4 +1,4 @@
--- V4: Crea los indices para optimizar el rendimiento de las consultas.
+-- V1: Crea los indices para optimizar el rendimiento de las consultas.
 
 -- Indices para la tabla 'vehicles'
 CREATE INDEX idx_vehicle_type ON vehicles(vehicle_type);
