@@ -3,9 +3,9 @@ spring:
     name: car_rent
   
   datasource:
-    url: jdbc:mysql://localhost:3306/stg_database
-    username: root
-    password: diogenes
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASS}
   
   jpa:
     hibernate:
@@ -20,7 +20,7 @@ spring:
     static-path-pattern: /static/**
   
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migrations
     baseline-on-migrate: true
     fail-on-missing-locations: false
@@ -31,9 +31,9 @@ spring:
 
 application:
   initial-admin:
-    username: Test QA
-    email: testqa@gmail.com
-    password: test-qa
+    username: ${INIT_ADMIN_USER}
+    email: ${INIT_ADMIN_EMAIL}
+    password: ${INIT_ADMIN_PASS}
 
 twilio:
   account-sid: ${TWILIO_SID}
