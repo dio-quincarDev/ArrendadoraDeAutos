@@ -70,10 +70,8 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         existingUser.setUsername(userRequest.getUsername());
         existingUser.setEmail(userRequest.getEmail());
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-        }
-        // Role update is handled by updateUserRole method
+        // La actualización de la contraseña no está permitida en esta operación.
+        // El rol se actualiza a través de updateUserRole.
 
         return userEntityRepository.save(existingUser);
     }
