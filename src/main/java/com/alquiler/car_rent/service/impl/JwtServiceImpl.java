@@ -73,21 +73,21 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public Integer extractUserEntityId(String token) {
-        try {
-            Claims claims = getClaims(token);
-            Object userIdClaim = claims.get("userEntityId");
-            if (userIdClaim == null) {
-                throw new IllegalArgumentException("No userEntityId claim found for token");
-            }
-            return ((Number) userIdClaim).intValue();
-        } catch (Exception e) {
-            System.err.println("Error extrayendo token: " + e.getMessage());
-            return null;
+        Claims claims = getClaims(token);
+        Object userIdClaim = claims.get("userEntityId");
+        if (userIdClaim == null) {
+            throw new IllegalArgumentException("No userEntityId claim found for token");
         }
+        return ((Number) userIdClaim).intValue();
     }
 
     @Override
     public String extractRole(String token) {
-        return getClaims(token).get("role", String.class);
+        Claims claims = getClaims(token);
+        String role = claims.get("role", String.class);
+        if (role == null) {
+            throw new IllegalArgumentException("No role claim found for token");
+        }
+        return role;
     }
 }

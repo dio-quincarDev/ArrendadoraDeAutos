@@ -64,7 +64,8 @@ public class UserManagementServiceImplTest {
     private void setupSecurityContextWithRole(String role) {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        when(authentication.getAuthorities()).thenReturn(Collections.singletonList(new SimpleGrantedAuthority(role)));
+        // Corregido para trabajar con colecciones genéricas en Mockito
+        when(authentication.getAuthorities()).thenAnswer(invocation -> Collections.singletonList(new SimpleGrantedAuthority(role)));
     }
 
     // --- Pruebas para createUser ---
