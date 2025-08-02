@@ -3,7 +3,6 @@ package com.alquiler.car_rent.service;
 import com.alquiler.car_rent.commons.constants.ReportingConstants;
 import com.alquiler.car_rent.commons.entities.Rental;
 import com.alquiler.car_rent.commons.entities.Vehicle;
-import com.alquiler.car_rent.commons.enums.PricingTier;
 import com.alquiler.car_rent.commons.enums.VehicleType;
 import com.alquiler.car_rent.repositories.RentalRepository;
 import com.alquiler.car_rent.service.impl.reportsImpl.ReportDataServiceImpl;
