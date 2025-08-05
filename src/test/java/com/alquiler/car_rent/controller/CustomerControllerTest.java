@@ -12,9 +12,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,13 +40,14 @@ public class CustomerControllerTest extends AbstractIntegrationTest {
                 "PA22M23",
                 null,
                 null,
-                "5077757265",
-                "ACTIVO"
+                "+5077757265",
+                "ACTIVE"
         );
 
         String customerJson = objectMapper.writeValueAsString(newCustomer);
 
         mockMvc.perform(post("/v1/customers")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USERS")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(customerJson))
                 .andExpect(status().isOk())
