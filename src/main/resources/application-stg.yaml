@@ -20,7 +20,7 @@ spring:
     static-path-pattern: /static/**
   
   flyway:
-    enabled: false
+    enabled: true
     locations: classpath:db/migrations
     baseline-on-migrate: true
     fail-on-missing-locations: false
