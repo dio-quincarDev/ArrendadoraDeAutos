@@ -1,4 +1,13 @@
 package com.alquiler.car_rent.controller;
 
-public class AuthControllerTest {
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("stg")
+@Transactional
+public class AuthControllerTest extends AbstractIntegrationTest {
 }

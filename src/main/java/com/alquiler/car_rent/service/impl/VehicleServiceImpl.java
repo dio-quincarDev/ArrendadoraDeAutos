@@ -4,6 +4,7 @@ import com.alquiler.car_rent.commons.dtos.VehicleDto;
 import com.alquiler.car_rent.commons.entities.Vehicle;
 import com.alquiler.car_rent.commons.enums.VehicleStatus;
 import com.alquiler.car_rent.commons.mappers.VehicleMapper;
+import com.alquiler.car_rent.exceptions.BadRequestException;
 import com.alquiler.car_rent.exceptions.NotFoundException;
 import com.alquiler.car_rent.repositories.VehicleRepository;
 import com.alquiler.car_rent.service.VehicleService;
@@ -51,6 +52,11 @@ public class VehicleServiceImpl implements VehicleService {
 	@Override
     @Transactional
 	public VehicleDto createVehicle(VehicleDto vehicleDto) {
+        // Check if a vehicle with the same plate already exists
+        if (vehicleRepository.findByPlate(vehicleDto.getPlate()).isPresent()) {
+            throw new BadRequestException("Ya existe un vehículo con la placa: " + vehicleDto.getPlate());
+        }
+
 		Vehicle vehicle = vehicleMapper.dtoToVehicle(vehicleDto);
 		vehicle.setStatus(VehicleStatus.AVAILABLE);
 		Vehicle savedVehicle = vehicleRepository.save(vehicle);
