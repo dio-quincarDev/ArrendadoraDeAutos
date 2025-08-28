@@ -77,7 +77,19 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
-
+	@ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+        // This is specifically for the manual login check in AuthServiceImpl
+        if (ex.getMessage().contains("Usuario o contraseña inválidos")) {
+            log.warn("Intento de login fallido: {}", ex.getMessage());
+            ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value());
+            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        }
+        // For other illegal argument errors, return Bad Request
+        log.warn("Argumento ilegal: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 
 	@ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
 	public ResponseEntity<ErrorResponse> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
