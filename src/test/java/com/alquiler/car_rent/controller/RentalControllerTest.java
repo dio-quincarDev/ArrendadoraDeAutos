@@ -147,6 +147,59 @@ public class RentalControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void testUpdateRental_Success() throws Exception {
+        // Arrange: Create a rental first
+        Long rentalId = createTestRentalAndGetId();
+
+        // Prepare updated data - must include all @NotNull/@NotBlank fields to pass validation
+        RentalDto updatedRentalDto = new RentalDto();
+        updatedRentalDto.setId(rentalId); // Mandatory field
+        updatedRentalDto.setCustomerId(testCustomer.id()); // Mandatory field
+        updatedRentalDto.setCustomerName(testCustomer.name()); // Mandatory field
+        updatedRentalDto.setVehicleId(testVehicle.getId()); // Mandatory field
+
+        // Truncate to seconds to avoid nanosecond precision issues in JSON comparison
+        LocalDateTime startDate = LocalDateTime.now().plusDays(2).truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        LocalDateTime endDate = LocalDateTime.now().plusDays(5).truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+
+        updatedRentalDto.setStartDate(startDate); // Mandatory and updated field
+        updatedRentalDto.setEndDate(endDate);   // Mandatory and updated field
+        updatedRentalDto.setChosenPricingTier(PricingTier.PREMIUM); // Updated field
+
+        // Define the expected date format, matching the @JsonFormat in the DTO
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/rentals/" + rentalId)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USERS")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updatedRentalDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(rentalId))
+                .andExpect(jsonPath("$.chosenPricingTier").value(PricingTier.PREMIUM.toString()))
+                .andExpect(jsonPath("$.endDate").value(endDate.format(formatter)));
+    }
+
+    @Test
+    void testUpdateRental_Fail_BadRequest() throws Exception {
+        // Arrange: Create a rental first
+        Long rentalId = createTestRentalAndGetId();
+
+        // Prepare invalid data (start date after end date)
+        RentalDto invalidRentalDto = new RentalDto();
+        invalidRentalDto.setStartDate(LocalDateTime.now().plusDays(5));
+        invalidRentalDto.setEndDate(LocalDateTime.now().plusDays(2));
+        invalidRentalDto.setChosenPricingTier(PricingTier.STANDARD);
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/rentals/" + rentalId)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USERS")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRentalDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void testDeleteRental_Fail_ForbiddenForUserRole() throws Exception {
         // Arrange: Create a rental first
         Long rentalId = createTestRentalAndGetId();
