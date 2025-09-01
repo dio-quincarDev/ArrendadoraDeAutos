@@ -11,7 +11,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,6 +63,30 @@ public class GlobalExceptionHandler {
 				));
 		log.warn("Error de validación de entidad: {}", errors);
 		return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+	public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(org.springframework.web.bind.MissingServletRequestParameterException ex, WebRequest request) {
+		log.warn("Parámetro de solicitud faltante: {}", ex.getMessage());
+		ErrorResponse error = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
+		String error;
+		Class<?> requiredType = ex.getRequiredType();
+		if (requiredType != null && requiredType.isEnum()) {
+			String validValues = Arrays.stream(requiredType.getEnumConstants())
+					.map(Object::toString)
+					.collect(Collectors.joining(", "));
+			error = String.format("Valor '%s' inválido para el parámetro '%s'. Los valores permitidos son: [%s].", ex.getValue(), ex.getName(), validValues);
+		} else {
+			error = String.format("Parámetro '%s' debe ser de tipo '%s'.", ex.getName(), requiredType != null ? requiredType.getSimpleName() : "desconocido");
+		}
+		log.warn("Error de tipo de parámetro: {}", error);
+		ErrorResponse errorResponse = new ErrorResponse(error, HttpStatus.BAD_REQUEST.value());
+		return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
 	}
 
 	@ExceptionHandler(NotFoundException.class)
