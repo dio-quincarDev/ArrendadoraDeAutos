@@ -2,6 +2,7 @@ package com.alquiler.car_rent.controllers;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -76,7 +77,7 @@ public interface RentalApi {
 	)
 	@PostMapping
 	@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'USERS', 'ADMIN')")
-	ResponseEntity<RentalDto> createRental(@RequestBody RentalDto rentalDto);
+	ResponseEntity<RentalDto> createRental(@Valid @RequestBody RentalDto rentalDto);
 
 	@Operation(
 			summary = "Listar todos los alquileres",
@@ -175,7 +176,7 @@ public interface RentalApi {
 					required = true
 			)
 			@PathVariable Long id,
-			@RequestBody RentalDto rentalDto
+			@Valid @RequestBody RentalDto rentalDto
 	);
 
 	@Operation(

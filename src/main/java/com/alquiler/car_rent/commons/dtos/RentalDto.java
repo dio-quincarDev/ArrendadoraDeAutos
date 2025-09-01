@@ -67,8 +67,6 @@ public class RentalDto {
     @Schema(description = "Fecha y hora de fin del alquiler", example = "2023-07-25 10:00:00")
     private LocalDateTime endDate;
    
-    @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a 0")
-    @Digits(integer = 10, fraction = 2, message = "Formato de precio inválido")
     @Schema(description = "Precio total del alquiler", example = "200.00")
     private BigDecimal totalPrice;
 

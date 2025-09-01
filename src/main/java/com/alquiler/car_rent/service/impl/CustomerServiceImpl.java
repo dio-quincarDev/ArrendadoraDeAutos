@@ -58,7 +58,7 @@ public class CustomerServiceImpl implements CustomerService {
 	                    existingCustomer.setEmail(customerDto.email());
 	                    existingCustomer.setPhone(customerDto.phone());
 	                    existingCustomer.setLicense(customerDto.license());
-	                    customerRepository.save(existingCustomer);
+	                    existingCustomer.setCustomerStatus(com.alquiler.car_rent.commons.enums.CustomerStatus.valueOf(customerDto.customerStatus()));
 	                    return customerMapper.customerToDto(customerRepository.save(existingCustomer));
 	                })
 	                .orElseThrow(() -> new NotFoundException("Cliente no encontrado con ID: " + id));

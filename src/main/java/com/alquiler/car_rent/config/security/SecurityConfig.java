@@ -30,15 +30,15 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain publicAndWebSocketFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(
-                "/v3/api-docs/**",
-                "/swagger-ui/**",
-                "/swagger-ui.html",
-                "/admin-alerts/**"
-            )
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .securityMatcher(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/admin-alerts/**"
+                )
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
@@ -46,34 +46,34 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(ApiPathConstants.V1_ROUTE + "/**")
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos de la API
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/login").permitAll()
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/register").permitAll()
-                .requestMatchers(HttpMethod.GET, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").permitAll()
+                .securityMatcher(ApiPathConstants.V1_ROUTE + "/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Endpoints públicos de la API
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/login").permitAll()
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.AUTH_ROUTE + "/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").permitAll()
 
-                // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Permitir OPTIONS para la ruta de reportes (para CORS preflight)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Endpoints de la API
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        // Endpoints de la API
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.USERS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.REPORTS_BASE_PATH + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.SMS_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
 
-                .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE).hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers(HttpMethod.PUT, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE).hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ApiPathConstants.V1_ROUTE + ApiPathConstants.VEHICLE_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
 
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
-                .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.CUSTOMER_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
+                        .requestMatchers(ApiPathConstants.V1_ROUTE + ApiPathConstants.RENTAL_ROUTE + "/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "USERS")
 
-                // Cualquier otra solicitud requiere autenticación
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        // Cualquier otra solicitud requiere autenticación
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
