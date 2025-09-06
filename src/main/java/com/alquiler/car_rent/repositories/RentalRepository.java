@@ -78,7 +78,7 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     @Query("""
     SELECT
         c.name AS customerName,
-        AVG(DATEDIFF(r.endDate, r.startDate)) AS avgDays
+        AVG(TIMESTAMPDIFF(DAY, r.startDate, r.endDate)) AS avgDays
     FROM Rental r
     JOIN r.customer c
     WHERE r.startDate <= :end AND r.endDate >= :start

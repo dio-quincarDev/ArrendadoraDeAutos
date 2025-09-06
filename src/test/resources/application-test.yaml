@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+
+jwt:
+  secret: "a-dummy-secret-for-testing-purposes-that-is-long-enough-to-be-valid"
+  header: Authorization
+  prefix: Bearer
+  expiration-time: 86400000
+
+application:
+  initial-admin:
+    username: "testadmin"
+    email: "admin@test.com"
+    password: "password"
+
+twilio:
+  enabled: false
+  account-sid: "dummy-sid"
+  auth-token: "dummy-token"
+  phone-number: "+15005550006"
+
+vonage:
+  api-key: "dummy-key"
+  api-secret: "dummy-secret"
+  from-number: "15005550000"
+
+sms:
+  provider: "twilio"

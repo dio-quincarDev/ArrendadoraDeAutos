@@ -41,6 +41,7 @@ public class Vehicle {
 	@NotBlank(message = "Modelo de Auto")
 	private String model;
 	
+	@Column(name = "vehicle_year")
 	private Integer year;
 	
 	@Column(name = "plate", nullable = false, unique = true)

@@ -26,9 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("stg")
+@ActiveProfiles("test")
 @Transactional
-public class SmsControllerTest extends AbstractIntegrationTest {
+public class SmsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,8 +41,8 @@ public class SmsControllerTest extends AbstractIntegrationTest {
 
     private String adminToken;
 
-    private final String ADMIN_EMAIL = "testqa@gmail.com";
-    private final String ADMIN_PASSWORD = "test-qa";
+    private final String ADMIN_EMAIL = "admin@test.com";
+    private final String ADMIN_PASSWORD = "password";
 
     @BeforeEach
     void setUp() throws Exception {

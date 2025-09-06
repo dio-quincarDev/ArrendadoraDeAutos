@@ -41,7 +41,7 @@ public class CustomerServiceImplTest {
     @Test
     void testCreateCustomer_Success() {
         // Arrange: Configurar el comportamiento de los mocks
-        CustomerDto customerDtoToSave = new CustomerDto(null, "Test Name", "test@example.com", "L12345", null, null, "123456789", "ACTIVO");
+        CustomerDto customerDtoToSave = new CustomerDto(null, "Test Name", "test@example.com", "L12345", null, null, "123456789", "ACTIVE");
         Customer mappedCustomer = new Customer(); // Objeto intermedio
         Customer savedCustomer = new Customer(); // Objeto que simula el guardado en DB
         savedCustomer.setId(1L);
@@ -53,7 +53,7 @@ public class CustomerServiceImplTest {
                 "test@example.com",
                 "L12345",
                 null, null,
-                "123456789", "ACTIVO");
+                "123456789", "ACTIVE");
 
         when(customerRepository.existsByEmail(any(String.class))).thenReturn(false);
         when(customerMapper.dtoToCustomer(any(CustomerDto.class))).thenReturn(mappedCustomer);
@@ -78,7 +78,7 @@ public class CustomerServiceImplTest {
                 "L54321",
                 null, null,
                 "987654321",
-                "ACTIVO");
+                "ACTIVE");
 
         when(customerRepository.existsByEmail(existingEmail)).thenReturn(true);
 
@@ -98,7 +98,7 @@ public class CustomerServiceImplTest {
                 "LT 009",
                 null, null,
                 "7757265",
-                "ACTIVO"
+                "ACTIVE"
         );
                 Customer existingCustomer = new Customer();
                 existingCustomer.setId(customerId);
@@ -127,7 +127,7 @@ public class CustomerServiceImplTest {
                 "000", null,
                 null,
                 "+775725",
-                "ACTIVO"
+                "ACTIVE"
         );
 
         when(customerRepository.findById(noExitosoCustomerId)).thenReturn(Optional.empty());
@@ -158,7 +158,7 @@ public class CustomerServiceImplTest {
                 "PMO 009",
                 null, null,
                 "7740987",
-                "ACTIVO"
+                "ACTIVE"
 
         );
 
@@ -200,13 +200,13 @@ public class CustomerServiceImplTest {
                 "L1",
                 null, null,
                 "1",
-                "ACTIVO");
+                "ACTIVE");
         CustomerDto customerDto2 = new CustomerDto(2L,
                 "Customer 2",
                 "c2@test.com",
                 "L2",
                 null, null,
-                "2", "ACTIVO");
+                "2", "ACTIVE");
         List<CustomerDto> customerDtos = Arrays.asList(customerDto1, customerDto2);
 
         when(customerRepository.findAll()).thenReturn(customers);

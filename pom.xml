@@ -82,6 +82,13 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <!-- H2 Database for testing -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -265,27 +272,7 @@
             </build>
         </profile>
 
-        <profile>
-            <id>stg</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <build.profile.id>stg</build.profile.id>
-                <profileActive>stg</profileActive>
-            </properties>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>application-stg.yaml</include>
-                        </includes>
-                    </resource>
-                </resources>
-            </build>
-        </profile>
+        
 
         <profile>
             <id>prod</id>

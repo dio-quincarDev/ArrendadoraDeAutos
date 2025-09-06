@@ -29,9 +29,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("stg")
+@ActiveProfiles("test")
 @Transactional
-public class CustomerControllerTest extends AbstractIntegrationTest {
+public class CustomerControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
